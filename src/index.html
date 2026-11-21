@@ -1302,7 +1302,7 @@ button { font: inherit; color: inherit; }
       this.pendingDash = false;
       this.input = { moveX: 0, moveY: 0 };
       this.player = {
-        x: W / 2, y: H / 2, vx: 0, vy: 0, ex: 0, ey: 0, r: CONFIG.player.radius,
+        x: W / 2, y: H / 2, prevX: W / 2, prevY: H / 2, vx: 0, vy: 0, ex: 0, ey: 0, r: CONFIG.player.radius,
         dirX: 0, dirY: -1, dashT: 0, dashInv: 0, dashDX: 0, dashDY: -1, dashCd: 0, invuln: 0,
         shield: this.loadout.shieldCharges, dragActive: false, tx: W / 2, ty: H / 2,
       };
@@ -1322,6 +1322,16 @@ button { font: inherit; color: inherit; }
     }
 
     segmentIndex() { return Math.floor(this.time / SEGMENT_SECONDS); }
+
+    /** Fraction of a step not yet simulated; the renderer lerps the ship by it (render-only, never fed back). */
+    alpha() { return Math.min(1, Math.max(0, this.acc / STEP)); }
+
+    /** Ship position interpolated between the last two steps for judder-free drawing on 144 Hz+ screens. */
+    renderPos() {
+      const p = this.player;
+      const a = this.alpha();
+      return { x: p.prevX + (p.x - p.prevX) * a, y: p.prevY + (p.y - p.prevY) * a };
+    }
 
     ensureSchedule(time) {
       while (this.generated * SEGMENT_SECONDS < time + 3) {
@@ -1375,6 +1385,8 @@ button { font: inherit; color: inherit; }
     step() {
       const dt = STEP;
       this.tick++;
+      this.player.prevX = this.player.x;
+      this.player.prevY = this.player.y;
       this.time = this.tick * STEP;
       const seg = this.segmentIndex();
       if (seg !== this.lastSeg) {
@@ -2205,7 +2217,7 @@ button { font: inherit; color: inherit; }
       const p = engine.player;
       const theme = this.theme;
       if (engine.state === 'running') {
-        this.trail.push({ x: p.x, y: p.y });
+        this.trail.push(engine.renderPos());
         if (this.trail.length > 22) this.trail.shift();
       }
       if (this.trail.length > 1) {
@@ -2226,8 +2238,9 @@ button { font: inherit; color: inherit; }
       }
       if (engine.state === 'breach' || engine.state === 'over') return;
       const flicker = p.invuln > 0 && Math.sin(this.clock * 40) > 0;
+      const rp = engine.renderPos();
       c.save();
-      c.translate(p.x, p.y);
+      c.translate(rp.x, rp.y);
       if (p.shield > 0) {
         c.strokeStyle = COLORS.core;
         c.globalAlpha = 0.35 + 0.15 * Math.sin(this.clock * 6);

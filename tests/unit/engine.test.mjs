@@ -60,6 +60,17 @@ test('frame dt is clamped so a long stall cannot skip the player through hazards
   assert.ok(steps <= Math.ceil(0.05 / PB.STEP));
 });
 
+test('render interpolation stays between the last two simulated positions', () => {
+  const e = new PB.GameEngine({ seed: SEED, loadout: base });
+  for (let i = 0; i < 30; i++) e.update(1 / 144, { moveX: 1, moveY: 0 });
+  const a = e.alpha();
+  assert.ok(a >= 0 && a <= 1);
+  const rp = e.renderPos();
+  const lo = Math.min(e.player.prevX, e.player.x);
+  const hi = Math.max(e.player.prevX, e.player.x);
+  assert.ok(rp.x >= lo && rp.x <= hi, `${rp.x} not in [${lo}, ${hi}]`);
+});
+
 test('non-finite input can never corrupt the player position', () => {
   const e = new PB.GameEngine({ seed: SEED, loadout: base });
   e.update(1 / 60, { moveX: NaN, moveY: Infinity, dragging: true, dragDX: NaN, dragDY: -Infinity });

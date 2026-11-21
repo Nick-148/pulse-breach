@@ -28,6 +28,8 @@ Newest first. One dated entry per working session.
 - Review fixes: engine input is clamped to finite values (a 0-size stage could otherwise yield NaN drag deltas
   and corrupt the ship position, now covered by a regression test); renderer scale is floored; tabs re-sync
   progression on the `storage` event so two open tabs no longer overwrite each other's scrap/upgrades.
+- Render interpolation for the ship (`GameEngine.renderPos`): no judder on 144 Hz+ screens where some frames
+  run zero 120 Hz steps. Render-only, so determinism is unchanged (tests still pass at 60/120/144 Hz).
 - Review fix: keyboard lookup uses `Object.hasOwn` instead of `in` (prototype keys).
 - Docs: AGENTS.md, PLAN.md, ADRs 0001–0006, deploy runbook, 5 skills.
 - Blocked (documented in PLAN.md): Cloudflare login (B1), domain (B2), ad network (B3), consent (B4).
