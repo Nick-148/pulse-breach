@@ -22,6 +22,8 @@ founder works ~10 hrs/week, so **operational simplicity beats cleverness**.
 | `scripts/check.mjs`          | Static guards: zero deps, no HTML-string sinks, no inline handlers, size budget.   |
 | `scripts/serve.mjs`          | Local static server that applies `dist/_headers` exactly like Pages.               |
 | `scripts/lib.mjs`            | Shared helpers (CSP hashing, `_headers` parsing).                                  |
+| `eslint.config.mjs`          | ESLint 9 flat config; `eslint-plugin-html` lints the inline game script.          |
+| `.github/workflows/ci.yml`   | CI: verify + Playwright e2e (desktop + mobile) on push/PR.                         |
 | `tests/unit/`                | `node:test` suites that load the game script in a VM (no DOM, no deps).            |
 | `tests/e2e/`                 | Playwright against `dist/` with real headers (desktop + mobile).                   |
 | `docs/SPEC.md`               | Original brief + appended clarifications. Source of truth for scope.               |
@@ -47,10 +49,10 @@ The script is one strict-mode IIFE with numbered sections. Keep this order:
 ## Commands
 
 ```bash
-npm install                 # once: only dev dependency is @playwright/test
+npm install                 # once: dev-only deps (Playwright, ESLint); the game itself has none
 npx playwright install chromium   # once, for e2e
 npm run dev                 # build + serve dist/ on http://localhost:4173 with real headers
-npm run verify              # static checks + unit tests + build
+npm run verify              # ESLint + static checks + unit tests + build
 npm run test:e2e            # Playwright (desktop + mobile) against dist/
 npm run deploy              # verify, then wrangler pages deploy (needs Cloudflare login)
 ```

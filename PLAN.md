@@ -29,7 +29,7 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started · ⛔ blocked
 - ✅ CI: GitHub Actions (`.github/workflows/ci.yml`) runs `npm run verify` + `npm run test:e2e` on push/PR (Node 22)
 - ⬜ Pin GitHub Actions to commit SHAs (supply-chain hardening) and add Dependabot for `@playwright/test`
 - ⬜ Investigate local Playwright hang on macOS (try newer `@playwright/test`, or stop the Android emulator)
-- ⬜ ESLint (flat config + `eslint-plugin-html`) for the inline script
+- ✅ ESLint (flat config + `eslint-plugin-html`) for the inline script, part of `npm run verify`
 - ⬜ Hide the Ad Mode toggle in production builds (e.g. `?debug=1` only) once real ads are live
 - ⬜ Open Graph share image (procedurally rendered PNG at build time) for richer link previews
 - ⬜ Balance pass with real players (death-time histogram per wave; tune `generateSegment` at UTC midnight)

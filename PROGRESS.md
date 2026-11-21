@@ -19,6 +19,8 @@ Newest first. One dated entry per working session.
 - Added GitHub Actions CI (Node 22; Node 20's `node --test` lacks glob support). First green run:
   verify ✓, e2e **18 passed / 2 intentionally skipped** (desktop + Pixel 7) under the production CSP.
 - Pushed to `github.com/Nick-148/pulse-breach` (`main`).
+- Added ESLint 9 + `eslint-plugin-html` (recommended + eqeqeq/prefer-const/no-implicit-globals); the game script
+  lints clean. Wired into `npm run verify` (and therefore CI).
 - Review fix: keyboard lookup uses `Object.hasOwn` instead of `in` (prototype keys).
 - Docs: AGENTS.md, PLAN.md, ADRs 0001–0006, deploy runbook, 5 skills.
 - Blocked (documented in PLAN.md): Cloudflare login (B1), domain (B2), ad network (B3), consent (B4).
