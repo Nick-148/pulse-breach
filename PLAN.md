@@ -17,8 +17,8 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started · ⛔ blocked
   Poki / CrazyGames / H5 `adBreak` adapters + stub
 - ✅ Portrait mobile: view rotates 90° instead of shrinking; touch drag + double-tap + DASH button
 - ✅ Cloudflare Pages build: `dist/` + `_headers` (hash-pinned CSP, HSTS, nosniff, Permissions-Policy)
-- ✅ Unit tests (node:test, 33)
-- ✅ E2E (Playwright, desktop + Pixel 7) green in GitHub Actions: 18 passed, 2 intentional skips.
+- ✅ Unit tests (node:test, 36, incl. a seed-balance bot)
+- ✅ E2E (Playwright, desktop + Pixel 7) green in GitHub Actions: 20 passed, 2 intentional skips.
   Locally the Playwright runner hangs at startup on the founder's Mac (see PROGRESS); CI is the source of truth
 - ✅ AGENTS.md, skills, ADRs, runbook
 
