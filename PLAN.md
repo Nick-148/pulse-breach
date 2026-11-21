@@ -26,7 +26,7 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started · ⛔ blocked
 
 - ⛔ Deploy to Cloudflare Pages (see Blockers B1)
 - ⛔ Custom domain `pulsebreach.io` (or alternative), see B2; then update `CONFIG.canonicalUrl`
-- ⬜ CI: GitHub Actions running `npm run verify` + `npm run test:e2e` on PRs
+- 🟡 CI: GitHub Actions (`.github/workflows/ci.yml`) runs `npm run verify` + `npm run test:e2e` on push/PR
 - ⬜ ESLint (flat config + `eslint-plugin-html`) for the inline script
 - ⬜ Hide the Ad Mode toggle in production builds (e.g. `?debug=1` only) once real ads are live
 - ⬜ Open Graph share image (procedurally rendered PNG at build time) for richer link previews
