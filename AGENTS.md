@@ -106,6 +106,8 @@ npm run deploy              # verify, then wrangler pages deploy (needs Cloudfla
 
 - New logic → unit test in the same change. Bugs → regression test first.
 - Determinism tests must keep passing (60/120/144 Hz equivalence, same-seed schedule equality).
+- `tests/unit/balance.test.mjs` plays every sampled seed with a simple bot; if you make waves harder and it
+  fails, re-tune deliberately (and say so in PROGRESS.md) rather than loosening the threshold silently.
 - E2E covers the core loop: load under CSP → run → breach → revive/decline → share; hangar; toggles.
 
 ## Workflow

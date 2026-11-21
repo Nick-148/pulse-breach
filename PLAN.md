@@ -27,7 +27,7 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started · ⛔ blocked
 - ⛔ Deploy to Cloudflare Pages (see Blockers B1)
 - ⛔ Custom domain `pulsebreach.io` (or alternative), see B2; then update `CONFIG.canonicalUrl`
 - ✅ CI: GitHub Actions (`.github/workflows/ci.yml`) runs `npm run verify` + `npm run test:e2e` on push/PR (Node 22)
-- ⬜ Pin GitHub Actions to commit SHAs (supply-chain hardening) and add Dependabot for `@playwright/test`
+- ✅ GitHub Actions pinned to commit SHAs; Dependabot (npm + actions, weekly)
 - ⬜ Investigate local Playwright hang on macOS (try newer `@playwright/test`, or stop the Android emulator)
 - ✅ ESLint (flat config + `eslint-plugin-html`) for the inline script, part of `npm run verify`
 - ⬜ Hide the Ad Mode toggle in production builds (e.g. `?debug=1` only) once real ads are live

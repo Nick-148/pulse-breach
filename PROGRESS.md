@@ -21,6 +21,10 @@ Newest first. One dated entry per working session.
 - Pushed to `github.com/Nick-148/pulse-breach` (`main`).
 - Added ESLint 9 + `eslint-plugin-html` (recommended + eqeqeq/prefer-const/no-implicit-globals); the game script
   lints clean. Wired into `npm run verify` (and therefore CI).
+- Supply chain: pinned workflow actions to commit SHAs; added Dependabot for npm + GitHub Actions.
+- Balance baseline: a crude evasive bot (no upgrades) survives 35–43 s across 8 seeds, dying in wave 4–5
+  (rings/wells, crossfire). Early waves are fair and seed difficulty is consistent. Kept as
+  `tests/unit/balance.test.mjs` (≥ 20 s on every sampled seed, spread < 25 s).
 - Review fix: keyboard lookup uses `Object.hasOwn` instead of `in` (prototype keys).
 - Docs: AGENTS.md, PLAN.md, ADRs 0001–0006, deploy runbook, 5 skills.
 - Blocked (documented in PLAN.md): Cloudflare login (B1), domain (B2), ad network (B3), consent (B4).
