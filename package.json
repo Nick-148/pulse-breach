@@ -4,7 +4,7 @@
   "private": true,
   "description": "Pulse Breach: Daily Run — single-file, zero-dependency HTML5 Canvas arcade game.",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": { "node": ">=22" },
   "scripts": {
     "check": "node scripts/check.mjs",
     "build": "node scripts/build.mjs",

@@ -6,7 +6,7 @@ The site is static: `dist/index.html`, `dist/_headers`, `dist/robots.txt`. No se
 
 1. Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git** → pick `Nick-148/pulse-breach`.
 2. Build settings: **Framework preset** None · **Build command** `npm run build` · **Build output** `dist`
-   · Environment variable `NODE_VERSION=20` (or newer).
+   · Environment variable `NODE_VERSION=22` (or newer; test globs need Node 21+).
 3. Save and deploy. Preview deployments are created for every branch/PR automatically.
 
 ## Option B: Direct upload from this machine
