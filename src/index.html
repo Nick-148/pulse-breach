@@ -1357,14 +1357,16 @@ button { font: inherit; color: inherit; }
 
     applyInput(inp) {
       if (!inp) return;
-      this.input.moveX = inp.moveX || 0;
-      this.input.moveY = inp.moveY || 0;
+      // A single NaN would poison the player position forever, so only finite input gets in.
+      const finite = (v) => (Number.isFinite(v) ? v : 0);
+      this.input.moveX = Math.max(-1, Math.min(1, finite(inp.moveX)));
+      this.input.moveY = Math.max(-1, Math.min(1, finite(inp.moveY)));
       if (inp.dash) this.pendingDash = true;
       const p = this.player;
       if (inp.dragging) {
         if (!p.dragActive) { p.dragActive = true; p.tx = p.x; p.ty = p.y; }
-        p.tx = Math.min(W - p.r, Math.max(p.r, p.tx + (inp.dragDX || 0)));
-        p.ty = Math.min(H - p.r, Math.max(p.r, p.ty + (inp.dragDY || 0)));
+        p.tx = Math.min(W - p.r, Math.max(p.r, p.tx + finite(inp.dragDX)));
+        p.ty = Math.min(H - p.r, Math.max(p.r, p.ty + finite(inp.dragDY)));
       } else {
         p.dragActive = false;
       }
@@ -1809,7 +1811,8 @@ button { font: inherit; color: inherit; }
       const portrait = cssH > cssW * 1.15;
       const ww = portrait ? H : W;
       const wh = portrait ? W : H;
-      const s = Math.min(cssW / ww, cssH / wh);
+      // Floor the scale: a 0-size stage (hidden, mid-rotation) must not produce 0/0 input deltas.
+      const s = Math.max(1e-3, Math.min(cssW / ww, cssH / wh));
       this.view = { s, dpr, portrait, ox: (cssW - ww * s) / 2, oy: (cssH - wh * s) / 2, cssW, cssH };
     }
 
@@ -2753,6 +2756,15 @@ button { font: inherit; color: inherit; }
       }
       document.addEventListener('visibilitychange', () => {
         if (document.hidden && this.state === 'playing') this.pause();
+      });
+      // Another tab changed progression: adopt it so this tab doesn't overwrite it with stale scrap/upgrades.
+      globalThis.addEventListener('storage', (e) => {
+        if (!e.key || !e.key.startsWith(STORAGE_PREFIX)) return;
+        this.profile = sanitizeProfile(this.store.read('profile'));
+        this.daily = sanitizeDaily(this.store.read('daily'));
+        this.applyTheme();
+        if (this.state === 'title') this.showTitle();
+        else if (this.state === 'hangar') this.renderHangar();
       });
     }
 

@@ -25,6 +25,9 @@ Newest first. One dated entry per working session.
 - Balance baseline: a crude evasive bot (no upgrades) survives 35–43 s across 8 seeds, dying in wave 4–5
   (rings/wells, crossfire). Early waves are fair and seed difficulty is consistent. Kept as
   `tests/unit/balance.test.mjs` (≥ 20 s on every sampled seed, spread < 25 s).
+- Review fixes: engine input is clamped to finite values (a 0-size stage could otherwise yield NaN drag deltas
+  and corrupt the ship position, now covered by a regression test); renderer scale is floored; tabs re-sync
+  progression on the `storage` event so two open tabs no longer overwrite each other's scrap/upgrades.
 - Review fix: keyboard lookup uses `Object.hasOwn` instead of `in` (prototype keys).
 - Docs: AGENTS.md, PLAN.md, ADRs 0001–0006, deploy runbook, 5 skills.
 - Blocked (documented in PLAN.md): Cloudflare login (B1), domain (B2), ad network (B3), consent (B4).

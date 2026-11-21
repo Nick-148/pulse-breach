@@ -60,6 +60,14 @@ test('frame dt is clamped so a long stall cannot skip the player through hazards
   assert.ok(steps <= Math.ceil(0.05 / PB.STEP));
 });
 
+test('non-finite input can never corrupt the player position', () => {
+  const e = new PB.GameEngine({ seed: SEED, loadout: base });
+  e.update(1 / 60, { moveX: NaN, moveY: Infinity, dragging: true, dragDX: NaN, dragDY: -Infinity });
+  e.update(1 / 60, { moveX: 0, moveY: 0, dragging: true, dragDX: 0 / 0, dragDY: 5 });
+  assert.ok(Number.isFinite(e.player.x) && Number.isFinite(e.player.y));
+  assert.ok(Number.isFinite(e.player.tx) && Number.isFinite(e.player.ty));
+});
+
 test('Aegis shield absorbs a fatal hit, then the next hit breaches', () => {
   const loadout = PB.loadoutFrom({ ...PB.defaultProfile(), upgrades: { magnet: 0, dash: 0, aegis: 1 } });
   const events = [];
