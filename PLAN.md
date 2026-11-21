@@ -18,15 +18,17 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started · ⛔ blocked
 - ✅ Portrait mobile: view rotates 90° instead of shrinking; touch drag + double-tap + DASH button
 - ✅ Cloudflare Pages build: `dist/` + `_headers` (hash-pinned CSP, HSTS, nosniff, Permissions-Policy)
 - ✅ Unit tests (node:test, 33)
-- 🟡 E2E suite written (`tests/e2e/game.spec.mjs`); runner hangs at startup on the founder's Mac. Next: run it in
-  CI (GitHub Actions, ubuntu) or try Node 20 / a newer `@playwright/test`, then fix any failing specs
+- ✅ E2E (Playwright, desktop + Pixel 7) green in GitHub Actions: 18 passed, 2 intentional skips.
+  Locally the Playwright runner hangs at startup on the founder's Mac (see PROGRESS); CI is the source of truth
 - ✅ AGENTS.md, skills, ADRs, runbook
 
 ## Milestone 2: Launch (next)
 
 - ⛔ Deploy to Cloudflare Pages (see Blockers B1)
 - ⛔ Custom domain `pulsebreach.io` (or alternative), see B2; then update `CONFIG.canonicalUrl`
-- 🟡 CI: GitHub Actions (`.github/workflows/ci.yml`) runs `npm run verify` + `npm run test:e2e` on push/PR
+- ✅ CI: GitHub Actions (`.github/workflows/ci.yml`) runs `npm run verify` + `npm run test:e2e` on push/PR (Node 22)
+- ⬜ Pin GitHub Actions to commit SHAs (supply-chain hardening) and add Dependabot for `@playwright/test`
+- ⬜ Investigate local Playwright hang on macOS (try newer `@playwright/test`, or stop the Android emulator)
 - ⬜ ESLint (flat config + `eslint-plugin-html`) for the inline script
 - ⬜ Hide the Ad Mode toggle in production builds (e.g. `?debug=1` only) once real ads are live
 - ⬜ Open Graph share image (procedurally rendered PNG at build time) for richer link previews
