@@ -19,7 +19,7 @@
     "deploy": "npm run verify && npx wrangler@3 pages deploy dist --project-name pulse-breach"
   },
   "devDependencies": {
-    "@eslint/js": "9.17.0",
+    "@eslint/js": "10.0.1",
     "@playwright/test": "1.49.1",
     "eslint": "9.17.0",
     "eslint-plugin-html": "8.1.2",
