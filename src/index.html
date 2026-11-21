@@ -1,0 +1,3122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pulse Breach: Daily Run</title>
+<meta name="description" content="A 60-second daily survival arcade run. Everyone gets the same seed: dodge, dash, graze, and share your run.">
+<meta name="theme-color" content="#05060f">
+<meta name="color-scheme" content="dark">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Pulse Breach: Daily Run">
+<meta property="og:description" content="Survive 60 seconds. Same run for everyone today. Beat your friends.">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2305060f'/%3E%3Cpath d='M32 10 52 50 32 42 12 50Z' fill='none' stroke='%2329f3ff' stroke-width='5' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #05060f;
+  --panel: rgba(10, 14, 32, 0.94);
+  --line: rgba(120, 160, 255, 0.2);
+  --fg: #e6f1ff;
+  --muted: #8fa3c7;
+  --accent: #29f3ff;
+  --accent-2: #ff2bd6;
+  --danger: #ff3355;
+  --gold: #ffd23f;
+  --ok: #5cff9d;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+body {
+  font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+#topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 12px;
+  min-height: 48px;
+  flex: 0 0 auto;
+}
+.brand { margin: 0; font-size: 14px; font-weight: 800; letter-spacing: 0.22em; white-space: nowrap; }
+.brand span { color: var(--accent); }
+.brand small { font-weight: 500; letter-spacing: 0.12em; color: var(--muted); margin-left: 6px; }
+.tools { display: flex; gap: 6px; align-items: center; }
+.chip, .icon {
+  min-height: 44px;
+  min-width: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(20, 28, 60, 0.6);
+  cursor: pointer;
+}
+.chip { font-size: 11px; letter-spacing: 0.06em; padding: 0 10px; color: var(--muted); }
+.icon { font-size: 16px; }
+#stage { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+#game { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+#banner-wrap {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+  padding: 6px 8px 8px;
+  border-top: 1px solid var(--line);
+}
+.ad-label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+#banner-ad-slot {
+  width: 728px;
+  height: 90px;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+  background: rgba(14, 20, 44, 0.5);
+}
+@media (max-width: 760px), (max-height: 520px) {
+  #banner-ad-slot { width: 320px; height: 50px; }
+  #banner-wrap { margin-top: 6px; padding-top: 4px; }
+  .brand small { display: none; }
+}
+@media (max-height: 420px) { #banner-wrap { display: none; } }
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(3, 4, 12, 0.55);
+  z-index: 5;
+}
+.overlay[hidden], .modal[hidden], #dash-btn[hidden], #challenge-banner[hidden] { display: none; }
+.panel {
+  width: min(460px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  touch-action: pan-y;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px 18px 16px;
+  text-align: center;
+  box-shadow: 0 0 48px rgba(41, 243, 255, 0.08);
+}
+.panel.wide { width: min(640px, 100%); text-align: left; }
+.panel h2 { margin: 4px 0 8px; font-size: 22px; letter-spacing: 0.06em; }
+.panel h3 { margin: 14px 0 6px; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+.kicker { margin: 0; font-size: 11px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; word-break: break-all; }
+.logo { font-size: clamp(30px, 7vw, 48px); font-weight: 900; letter-spacing: 0.08em; margin: 6px 0 2px; line-height: 1; }
+.logo span { color: var(--accent); }
+.tagline { margin: 6px 0 12px; color: var(--muted); }
+.note { margin: 8px 0; color: var(--muted); font-size: 13px; }
+.hint { margin: 10px 0 0; color: var(--muted); font-size: 12px; }
+.row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(28, 38, 80, 0.75);
+  cursor: pointer;
+  font-weight: 650;
+}
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.primary { width: 100%; margin-top: 6px; background: var(--accent); color: #031018; border-color: transparent; font-size: 17px; letter-spacing: 0.08em; }
+.btn.reward { width: 100%; margin-top: 8px; background: rgba(255, 210, 63, 0.12); border-color: rgba(255, 210, 63, 0.55); color: var(--gold); }
+.btn.ghost { background: transparent; }
+.btn.small { min-height: 44px; padding: 0 12px; font-size: 13px; }
+.modes { display: flex; gap: 6px; justify-content: center; margin: 4px 0 10px; flex-wrap: wrap; }
+.modes .btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: rgba(41, 243, 255, 0.1); }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0; }
+.stats div { background: rgba(20, 28, 60, 0.55); border: 1px solid var(--line); border-radius: 10px; padding: 6px 4px; }
+.stats dt { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.stats dd { margin: 2px 0 0; font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.timeline { font-size: clamp(26px, 8vw, 38px); letter-spacing: 0.08em; margin: 8px 0 4px; line-height: 1.2; word-break: break-word; }
+.cards { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(20, 28, 60, 0.5);
+}
+.card strong { font-size: 15px; }
+.card p { margin: 0; color: var(--muted); font-size: 12px; grid-column: 1; }
+.pips { color: var(--accent); letter-spacing: 0.2em; font-size: 12px; }
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 50%; margin-right: 6px; vertical-align: -2px; background: var(--swatch, var(--accent)); box-shadow: 0 0 10px var(--swatch, var(--accent)); }
+.scrap { color: var(--gold); font-weight: 800; }
+#hud {
+  position: absolute;
+  inset: 0 0 auto 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  pointer-events: none;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  z-index: 2;
+}
+#hud[hidden] { display: none; }
+.hud-block { display: flex; flex-direction: column; gap: 3px; min-width: 84px; }
+.hud-block.center { align-items: center; }
+.hud-block.right { align-items: flex-end; }
+.hud-label { font-size: 10px; letter-spacing: 0.18em; color: var(--muted); }
+.hud-value { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; text-shadow: 0 0 10px rgba(41, 243, 255, 0.5); }
+#hud-mult { color: var(--accent-2); font-weight: 800; }
+.bar { width: 84px; height: 5px; border-radius: 3px; background: rgba(120, 160, 255, 0.18); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 100%; background: var(--accent); transform-origin: left center; transform: scaleX(0); }
+.bar.big { width: 100%; height: 8px; margin: 12px 0; }
+.bar.big i { background: var(--gold); }
+#hud-shield { color: var(--gold); font-size: 13px; min-height: 16px; }
+#announce {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  transform: translate(-50%, -50%);
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  font-size: clamp(14px, 3.4vw, 26px);
+  color: var(--accent);
+  text-shadow: 0 0 18px currentColor;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+  text-align: center;
+  white-space: nowrap;
+  z-index: 3;
+}
+#announce.show { opacity: 1; }
+#challenge-banner {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  transform: translateX(-50%);
+  z-index: 6;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 43, 214, 0.16);
+  border: 1px solid rgba(255, 43, 214, 0.6);
+  color: #ffd6f6;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  max-width: calc(100% - 24px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+#dash-btn {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: rgba(41, 243, 255, 0.12);
+  color: var(--accent);
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  z-index: 4;
+  touch-action: none;
+}
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(2, 3, 8, 0.86);
+}
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 22%;
+  transform: translateX(-50%);
+  z-index: 60;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--ok);
+  color: #02140a;
+  font-weight: 800;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+#toast.show { opacity: 1; }
+.sr-only, .copy-buffer {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  #announce, #toast { transition: none; }
+}
+</style>
+</head>
+<body>
+<noscript><p class="note">Pulse Breach needs JavaScript enabled to run.</p></noscript>
+<div id="app">
+  <header id="topbar">
+    <h1 class="brand">PULSE <span>BREACH</span><small>DAILY RUN</small></h1>
+    <div class="tools">
+      <button id="btn-ad-mode" class="chip" type="button" title="Switch between simulated ads and SDK hooks">Ad Mode: Simulated</button>
+      <button id="btn-pause" class="icon" type="button" aria-label="Pause">&#10074;&#10074;</button>
+      <button id="btn-mute" class="icon" type="button" aria-pressed="false" aria-label="Mute sound">&#128266;</button>
+    </div>
+  </header>
+
+  <main id="stage">
+    <canvas id="game" aria-label="Pulse Breach game arena" role="img"></canvas>
+
+    <div id="hud" hidden>
+      <div class="hud-block">
+        <span class="hud-label">TIME</span>
+        <span id="hud-time" class="hud-value">0.0</span>
+        <span id="hud-shield"></span>
+      </div>
+      <div class="hud-block center">
+        <span class="hud-label">SCORE</span>
+        <span id="hud-score" class="hud-value">0</span>
+        <span id="hud-mult">x1</span>
+        <div class="bar"><i id="hud-chain"></i></div>
+      </div>
+      <div class="hud-block right">
+        <span class="hud-label">DASH</span>
+        <div class="bar"><i id="hud-dash"></i></div>
+      </div>
+    </div>
+    <div id="announce" aria-live="polite"></div>
+    <div id="challenge-banner" hidden></div>
+    <button id="dash-btn" type="button" aria-label="Phase dash" hidden>DASH</button>
+
+    <section class="overlay" id="scr-title" aria-labelledby="title-heading">
+      <div class="panel">
+        <p class="kicker" id="title-kicker">Daily Challenge</p>
+        <h2 class="logo" id="title-heading">PULSE<span>BREACH</span></h2>
+        <p class="tagline" id="title-tagline">Survive 60 seconds. Same run for everyone today.</p>
+        <div class="modes" role="group" aria-label="Run mode">
+          <button class="btn small" type="button" data-mode="daily" aria-pressed="true">Daily</button>
+          <button class="btn small" type="button" data-mode="challenge" aria-pressed="false" hidden>Challenge</button>
+          <button class="btn small" type="button" data-mode="practice" aria-pressed="false">Practice</button>
+        </div>
+        <dl class="stats" id="title-stats"></dl>
+        <button id="btn-play" class="btn primary" type="button">START RUN</button>
+        <div class="row">
+          <button id="btn-hangar" class="btn" type="button">Hangar &middot; <span id="title-scrap" class="scrap">0</span> scrap</button>
+        </div>
+        <p class="hint">Move: WASD / Arrows &middot; Dash: Space / Shift &middot; Touch: drag + double-tap or DASH</p>
+      </div>
+    </section>
+
+    <section class="overlay" id="scr-hangar" aria-labelledby="hangar-heading" hidden>
+      <div class="panel wide">
+        <h2 id="hangar-heading">Hangar</h2>
+        <p class="note">Scrap bank: <span id="hangar-scrap" class="scrap">0</span></p>
+        <h3>Upgrades</h3>
+        <ul class="cards" id="upgrade-list"></ul>
+        <h3>Hull trails</h3>
+        <ul class="cards" id="theme-list"></ul>
+        <button id="btn-topup" class="btn reward" type="button">&#9654; Watch ad: +100 scrap</button>
+        <div class="row"><button id="btn-hangar-back" class="btn" type="button">Back</button></div>
+      </div>
+    </section>
+
+    <section class="overlay" id="scr-revive" aria-labelledby="revive-heading" hidden>
+      <div class="panel">
+        <p class="kicker">Second chance</p>
+        <h2 id="revive-heading">HULL BREACH</h2>
+        <p class="note">Respawn at <strong id="revive-time">0.0s</strong> with 2.5s of invulnerability. One revive per run.</p>
+        <p class="timeline" id="revive-count" aria-live="polite">6</p>
+        <button id="btn-revive" class="btn reward" type="button">&#9654; Watch ad to revive</button>
+        <div class="row"><button id="btn-revive-skip" class="btn ghost" type="button">No thanks</button></div>
+      </div>
+    </section>
+
+    <section class="overlay" id="scr-over" aria-labelledby="over-heading" hidden>
+      <div class="panel">
+        <p class="kicker" id="over-seed">Seed</p>
+        <h2 id="over-heading">RUN COMPLETE</h2>
+        <p class="timeline" id="over-timeline"></p>
+        <dl class="stats" id="over-stats"></dl>
+        <p class="note" id="over-note"></p>
+        <button id="btn-share" class="btn primary" type="button">SHARE / COPY CHALLENGE</button>
+        <button id="btn-double" class="btn reward" type="button">&#9654; Watch ad: 2x scrap</button>
+        <div class="row">
+          <button id="btn-again" class="btn" type="button">Run again</button>
+          <button id="btn-over-hangar" class="btn" type="button">Hangar</button>
+          <button id="btn-over-menu" class="btn" type="button">Menu</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="overlay" id="scr-pause" aria-labelledby="pause-heading" hidden>
+      <div class="panel">
+        <h2 id="pause-heading">PAUSED</h2>
+        <button id="btn-resume" class="btn primary" type="button">RESUME</button>
+        <div class="row"><button id="btn-end" class="btn ghost" type="button">End run</button></div>
+      </div>
+    </section>
+  </main>
+
+  <aside id="banner-wrap" aria-label="Advertisement">
+    <span class="ad-label">Advertisement</span>
+    <div id="banner-ad-slot"></div>
+  </aside>
+</div>
+
+<div id="ad-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="ad-modal-title" hidden>
+  <div class="panel">
+    <p class="kicker" id="ad-modal-kicker">Sponsored &middot; Simulated</p>
+    <h2 id="ad-modal-title">Rewarded Ad Playing... <span id="ad-count">5</span>s</h2>
+    <div class="bar big"><i id="ad-progress"></i></div>
+    <p class="note">Reward: <span id="ad-reward-label"></span></p>
+    <button id="btn-ad-close" class="btn ghost" type="button">Close (no reward)</button>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script id="game-script">
+(() => {
+  'use strict';
+
+  /* ======================================================================
+   * 1. CONFIG & SEEDED PRNG
+   * Everything that decides spawns must flow from the seed through Rng so
+   * every player sees the same run (ADR 0002). Cosmetic randomness (particles,
+   * stars) uses Math.random and never touches the simulation.
+   * ==================================================================== */
+  const VERSION = '1.0.0';
+  const STORAGE_PREFIX = 'pulse_breach_v1_';
+  const W = 1280;
+  const H = 720;
+  const STEP = 1 / 120;
+  const MAX_FRAME_DT = 0.05;
+  const RUN_SECONDS = 60;
+  const SEGMENT_SECONDS = 10;
+  const SEGMENTS = 6;
+  const MAX_HAZARDS = 260;
+  const TAU = Math.PI * 2;
+
+  function deepFreeze(obj) {
+    for (const value of Object.values(obj)) {
+      if (value && typeof value === 'object' && !Object.isFrozen(value)) deepFreeze(value);
+    }
+    return Object.freeze(obj);
+  }
+
+  const CONFIG = deepFreeze({
+    title: 'Pulse Breach',
+    canonicalUrl: 'https://pulsebreach.io/',
+    player: {
+      radius: 11, speed: 430, response: 14, dragGain: 16, dragMaxSpeed: 1150,
+      dashSpeed: 1180, dashTime: 0.16, dashGrace: 0.06,
+    },
+    combo: { perStep: 4, maxMult: 10, window: 3.0, grazeRefill: 0.6, fireAt: 6 },
+    score: { shard: 100, core: 500, graze: 50, phase: 150, bait: 250, perSecond: 20, overdrivePerSecond: 40 },
+    graze: { margin: 18, hitstop: 0.03, hitstopGap: 0.2 },
+    shard: { life: 6.5, pickupRadius: 26, magnetSpeed: 560, coreChain: 5 },
+    revive: { invuln: 2.5, offerSeconds: 6 },
+    shield: { invuln: 1.1, shockwaveRadius: 170 },
+    ads: { simulatedSeconds: 5, stubSeconds: 2, sdkTimeoutMs: 45000, topUpScrap: 100, defaultMode: 'simulated' },
+  });
+
+  const SEGMENT_NAMES = Object.freeze([
+    'WAVE 1 · DEBRIS FIELD',
+    'WAVE 2 · SWEEPING LASERS',
+    'WAVE 3 · HUNTER DRONES',
+    'WAVE 4 · PULSE RINGS',
+    'WAVE 5 · CROSSFIRE',
+    'WAVE 6 · CORE MELTDOWN',
+    'OVERDRIVE',
+  ]);
+
+  /** mulberry32: tiny, fast, well-distributed 32-bit PRNG. Same seed → same sequence everywhere. */
+  function mulberry32(seed) {
+    let state = seed >>> 0;
+    return function next() {
+      state = (state + 0x6d2b79f5) >>> 0;
+      let t = state;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  /** FNV-1a + murmur3 finalizer: turns a seed string into well-mixed PRNG state. */
+  function hashString(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 0x01000193);
+    }
+    h ^= h >>> 16;
+    h = Math.imul(h, 0x85ebca6b);
+    h ^= h >>> 13;
+    h = Math.imul(h, 0xc2b2ae35);
+    h ^= h >>> 16;
+    return h >>> 0;
+  }
+
+  class Rng {
+    constructor(seedNumber) { this.nextFloat = mulberry32(seedNumber); }
+    next() { return this.nextFloat(); }
+    range(min, max) { return min + (max - min) * this.nextFloat(); }
+    int(min, maxInclusive) { return min + Math.floor(this.nextFloat() * (maxInclusive - min + 1)); }
+    chance(p) { return this.nextFloat() < p; }
+    sign() { return this.nextFloat() < 0.5 ? -1 : 1; }
+  }
+
+  /** Independent stream per (seed, label…) so adding a hazard to one wave never shifts another wave. */
+  const rngFor = (seed, ...parts) => new Rng(hashString([seed, ...parts].join('|')));
+
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const utcDateString = (date) => `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(date.getUTCDate())}`;
+  const dailySeedFor = (date) => `DAILY-${utcDateString(date)}`;
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  const SEED_RE = /^[A-Z0-9-]{1,32}$/;
+
+  function shiftDateString(dateString, days) {
+    const [y, m, d] = dateString.split('-').map(Number);
+    return utcDateString(new Date(Date.UTC(y, m - 1, d + days)));
+  }
+
+  /** Seeds come from URLs, so they are untrusted: whitelist characters and length. */
+  function sanitizeSeed(raw) {
+    if (typeof raw !== 'string') return null;
+    const seed = raw.trim().toUpperCase();
+    return SEED_RE.test(seed) ? seed : null;
+  }
+
+  function randomSeed(randomInt) {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let out = 'P-';
+    for (let i = 0; i < 6; i++) out += alphabet[randomInt(alphabet.length)];
+    return out;
+  }
+
+  function secureRandomInt(n) {
+    const buf = new Uint32Array(1);
+    globalThis.crypto.getRandomValues(buf);
+    return buf[0] % n; // tiny modulo bias is irrelevant for a practice seed name
+  }
+
+  function parseLaunchParams(search) {
+    const params = new URLSearchParams(search);
+    const seed = sanitizeSeed(params.get('seed'));
+    const beatRaw = params.get('beat');
+    const beat = seed && beatRaw && /^\d{1,9}$/.test(beatRaw) ? Number(beatRaw) : null;
+    return { seed, beat, debug: params.get('debug') === '1' };
+  }
+
+  /* ---------------------------- Persistence ---------------------------- */
+  // All keys live under pulse_breach_v1_*. Values are re-validated on every
+  // load: storage can be stale, hand-edited, or from an older version.
+  class Store {
+    constructor(backend) { this.backend = backend; }
+    read(key) {
+      try {
+        const raw = this.backend ? this.backend.getItem(STORAGE_PREFIX + key) : null;
+        return raw ? JSON.parse(raw) : null;
+      } catch { return null; }
+    }
+    write(key, value) {
+      try {
+        if (!this.backend) return false;
+        this.backend.setItem(STORAGE_PREFIX + key, JSON.stringify(value));
+        return true;
+      } catch { return false; }
+    }
+  }
+
+  const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+  const clampInt = (v, min, max, fallback) => (Number.isFinite(v) ? Math.min(max, Math.max(min, Math.floor(v))) : fallback);
+  const MAX_SCRAP = 1e7;
+  const MAX_SCORE = 1e9;
+
+  /* ----------------------------- Economy -------------------------------- */
+  const UPGRADES = deepFreeze({
+    magnet: { name: 'Magnet Radius', blurb: 'Pulls nearby shards toward your hull.', costs: [60, 160, 360], values: [0, 110, 170, 240], fmt: (v) => (v ? `${v}px pull` : 'none') },
+    dash: { name: 'Dash Cooldown', blurb: 'Faster Phase Dash recharge.', costs: [60, 160, 360], values: [1.6, 1.25, 0.95, 0.7], fmt: (v) => `${v}s` },
+    aegis: { name: 'Aegis Shield', blurb: 'Absorbs fatal hits. Tier 2+ adds a shockwave.', costs: [90, 220, 450], values: [0, 1, 1, 2], fmt: (v) => `${v} charge${v === 1 ? '' : 's'}` },
+  });
+  const UPGRADE_KEYS = Object.freeze(Object.keys(UPGRADES));
+
+  const THEMES = deepFreeze([
+    { id: 'pulse', name: 'Cyan Pulse', cost: 0, primary: '#29f3ff', secondary: '#ff2bd6', trail: '#29f3ff' },
+    { id: 'toxic', name: 'Toxic Grid', cost: 150, primary: '#7dff3a', secondary: '#d4ff00', trail: '#2bff88' },
+    { id: 'ultra', name: 'Ultraviolet', cost: 250, primary: '#b980ff', secondary: '#ff5ce1', trail: '#8a5cff' },
+    { id: 'ice', name: 'Cryo White', cost: 400, primary: '#eaf6ff', secondary: '#7fd4ff', trail: '#9fe3ff' },
+    { id: 'solar', name: 'Solar Crown', cost: 650, primary: '#ffe066', secondary: '#ffffff', trail: '#ffb703' },
+  ]);
+  const themeById = (id) => THEMES.find((t) => t.id === id) || THEMES[0];
+
+  function defaultProfile() {
+    return { scrap: 0, upgrades: { magnet: 0, dash: 0, aegis: 0 }, themes: ['pulse'], theme: 'pulse', runs: 0, bestPractice: 0 };
+  }
+
+  function sanitizeProfile(raw) {
+    const p = defaultProfile();
+    if (!isObj(raw)) return p;
+    p.scrap = clampInt(raw.scrap, 0, MAX_SCRAP, 0);
+    if (isObj(raw.upgrades)) {
+      for (const key of UPGRADE_KEYS) p.upgrades[key] = clampInt(raw.upgrades[key], 0, 3, 0);
+    }
+    if (Array.isArray(raw.themes)) {
+      const owned = new Set(['pulse']);
+      for (const id of raw.themes) if (THEMES.some((t) => t.id === id)) owned.add(id);
+      p.themes = THEMES.filter((t) => owned.has(t.id)).map((t) => t.id);
+    }
+    p.theme = p.themes.includes(raw.theme) ? raw.theme : 'pulse';
+    p.runs = clampInt(raw.runs, 0, 1e9, 0);
+    p.bestPractice = clampInt(raw.bestPractice, 0, MAX_SCORE, 0);
+    return p;
+  }
+
+  function sanitizeSettings(raw) {
+    const s = { muted: false, adMode: CONFIG.ads.defaultMode };
+    if (!isObj(raw)) return s;
+    s.muted = raw.muted === true;
+    s.adMode = raw.adMode === 'sdk' ? 'sdk' : 'simulated';
+    return s;
+  }
+
+  function upgradeCost(profile, key) {
+    const tier = profile.upgrades[key];
+    return tier >= 3 ? null : UPGRADES[key].costs[tier];
+  }
+
+  function buyUpgrade(profile, key) {
+    if (!UPGRADE_KEYS.includes(key)) return { ok: false, reason: 'unknown', profile };
+    const cost = upgradeCost(profile, key);
+    if (cost === null) return { ok: false, reason: 'maxed', profile };
+    if (profile.scrap < cost) return { ok: false, reason: 'funds', profile };
+    return {
+      ok: true,
+      reason: 'bought',
+      profile: { ...profile, scrap: profile.scrap - cost, upgrades: { ...profile.upgrades, [key]: profile.upgrades[key] + 1 } },
+    };
+  }
+
+  /** Unlocks (if affordable) and equips a hull theme. */
+  function selectTheme(profile, id) {
+    const theme = THEMES.find((t) => t.id === id);
+    if (!theme) return { ok: false, reason: 'unknown', profile };
+    if (profile.themes.includes(id)) return { ok: true, reason: 'equipped', profile: { ...profile, theme: id } };
+    if (profile.scrap < theme.cost) return { ok: false, reason: 'funds', profile };
+    return { ok: true, reason: 'unlocked', profile: { ...profile, scrap: profile.scrap - theme.cost, themes: [...profile.themes, id], theme: id } };
+  }
+
+  function addScrap(profile, amount) {
+    return { ...profile, scrap: Math.min(MAX_SCRAP, profile.scrap + Math.max(0, Math.floor(amount))) };
+  }
+
+  const scrapForRun = (score, seconds) => Math.max(0, Math.floor(score / 200) + Math.floor(seconds));
+
+  function loadoutFrom(profile) {
+    const t = profile.upgrades;
+    return Object.freeze({
+      tiers: Object.freeze({ ...t }),
+      magnetRadius: UPGRADES.magnet.values[t.magnet],
+      dashCooldown: UPGRADES.dash.values[t.dash],
+      shieldCharges: UPGRADES.aegis.values[t.aegis],
+      shockwave: t.aegis >= 2,
+    });
+  }
+
+  /* ------------------------------ Daily --------------------------------- */
+  function defaultDaily() {
+    return { date: null, best: 0, bestTime: 0, attempts: 0, streak: 0, bestStreak: 0, lastDate: null };
+  }
+
+  function sanitizeDaily(raw) {
+    const d = defaultDaily();
+    if (!isObj(raw)) return d;
+    d.date = typeof raw.date === 'string' && DATE_RE.test(raw.date) ? raw.date : null;
+    d.lastDate = typeof raw.lastDate === 'string' && DATE_RE.test(raw.lastDate) ? raw.lastDate : null;
+    d.best = clampInt(raw.best, 0, MAX_SCORE, 0);
+    d.bestTime = Number.isFinite(raw.bestTime) ? Math.min(1e5, Math.max(0, raw.bestTime)) : 0;
+    d.attempts = clampInt(raw.attempts, 0, 1e6, 0);
+    d.streak = clampInt(raw.streak, 0, 1e5, 0);
+    d.bestStreak = Math.max(d.streak, clampInt(raw.bestStreak, 0, 1e5, 0));
+    return d;
+  }
+
+  /** Called when a daily run starts: bumps Attempt # and the consecutive-day streak. */
+  function registerDailyAttempt(daily, today) {
+    const d = daily.date === today ? { ...daily } : { ...daily, date: today, best: 0, bestTime: 0, attempts: 0 };
+    d.attempts += 1;
+    if (d.lastDate !== today) {
+      d.streak = d.lastDate === shiftDateString(today, -1) ? d.streak + 1 : 1;
+      d.lastDate = today;
+    }
+    d.bestStreak = Math.max(d.bestStreak, d.streak);
+    return d;
+  }
+
+  function recordDailyResult(daily, today, score, seconds) {
+    if (daily.date !== today || score <= daily.best) return daily;
+    return { ...daily, best: Math.floor(score), bestTime: seconds };
+  }
+
+  /** A streak is alive if the last daily was played today or yesterday (UTC). */
+  function currentStreak(daily, today) {
+    return daily.lastDate === today || daily.lastDate === shiftDateString(today, -1) ? daily.streak : 0;
+  }
+
+  /* --------------------------- Share card ------------------------------- */
+  const GLYPH = Object.freeze({ clean: '🟩', close: '🟨', fire: '🔥', crash: '💀', unreached: '⬛', overdrive: '⚡' });
+
+  /** Six 10-second blocks; spoiler-free (shows how you did, not what spawned). */
+  function buildTimeline(segments, deathSegment) {
+    const out = [];
+    for (let i = 0; i < SEGMENTS; i++) {
+      const s = segments[i] || { maxMult: 1, closeCall: false };
+      if (deathSegment !== -1 && i > deathSegment) out.push(GLYPH.unreached);
+      else if (i === deathSegment) out.push(GLYPH.crash);
+      else if (s.closeCall) out.push(GLYPH.close);
+      else if (s.maxMult >= CONFIG.combo.fireAt) out.push(GLYPH.fire);
+      else out.push(GLYPH.clean);
+    }
+    return out.join('');
+  }
+
+  const fmtInt = (n) => Math.floor(n).toLocaleString('en-US');
+
+  function loadoutTag(tiers) {
+    if (!tiers || (tiers.magnet | tiers.dash | tiers.aegis) === 0) return '';
+    return `M${tiers.magnet}·D${tiers.dash}·A${tiers.aegis}`;
+  }
+
+  function challengeUrl(base, seed, score) {
+    const url = new URL(base);
+    url.search = '';
+    url.hash = '';
+    url.searchParams.set('seed', seed);
+    if (Number.isFinite(score) && score > 0) url.searchParams.set('beat', String(Math.floor(score)));
+    return url.toString();
+  }
+
+  function buildShareText({ seed, timeline, survival, score, maxMult, url, revived, tiers }) {
+    const lines = [
+      `PULSE BREACH ${GLYPH.overdrive} ${seed}`,
+      timeline,
+      `⏱ ${survival.toFixed(1)}s  ★ ${fmtInt(score)}  ✖${maxMult} combo`,
+    ];
+    const notes = [];
+    if (revived) notes.push('♻️ revived');
+    const tag = loadoutTag(tiers);
+    if (tag) notes.push(`🛠 ${tag}`);
+    if (notes.length) lines.push(notes.join('  '));
+    lines.push(`Beat my run: ${url}`);
+    return lines.join('\n');
+  }
+
+  /* --------------------------- Spawn director --------------------------- */
+  // A run's hazards are a pure function of (seed, wave index). Waves are
+  // generated lazily in 10 s chunks, each from its own RNG stream.
+  function edgePoint(rng, margin) {
+    switch (rng.int(0, 3)) {
+      case 0: return { x: -margin, y: rng.range(30, H - 30) };
+      case 1: return { x: W + margin, y: rng.range(30, H - 30) };
+      case 2: return { x: rng.range(30, W - 30), y: -margin };
+      default: return { x: rng.range(30, W - 30), y: H + margin };
+    }
+  }
+
+  function aimAcross(rng, from, speed) {
+    const tx = rng.range(W * 0.2, W * 0.8);
+    const ty = rng.range(H * 0.2, H * 0.8);
+    const dx = tx - from.x;
+    const dy = ty - from.y;
+    const len = Math.hypot(dx, dy) || 1;
+    return { vx: (dx / len) * speed, vy: (dy / len) * speed };
+  }
+
+  /** Calls fn at jittered intervals in [t0, t1). Stops early so every event stays inside its chunk. */
+  function every(rng, t0, t1, interval, jitter, fn) {
+    for (let t = t0 + rng.range(0, interval * 0.5); t < t1 - 0.4; t += interval * rng.range(1 - jitter, 1 + jitter)) fn(t);
+  }
+
+  function generateSegment(seed, k) {
+    const rng = rngFor(seed, 'wave', k);
+    const t0 = k * SEGMENT_SECONDS;
+    const t1 = t0 + SEGMENT_SECONDS;
+    const overdrive = k >= SEGMENTS;
+    const mul = overdrive ? 1 + 0.12 * (k - SEGMENTS + 1) : 1;
+    const ev = [];
+
+    const shard = (t, golden = false) => ev.push({ t, type: 'shard', x: rng.range(70, W - 70), y: rng.range(70, H - 70), golden });
+    const debris = (t, sMin, sMax, rMin, rMax) => {
+      const p = edgePoint(rng, 50);
+      const v = aimAcross(rng, p, rng.range(sMin, sMax) * mul);
+      ev.push({ t, type: 'debris', x: p.x, y: p.y, vx: v.vx, vy: v.vy, r: rng.range(rMin, rMax), spin: rng.range(-2, 2) });
+    };
+    const laser = (t, x, y, angle) => ev.push({
+      t, type: 'laser', x, y, angle, sweep: rng.sign() * rng.range(0.15, 0.45), warn: 1.2, active: 0.75, width: 14,
+    });
+    const randomLaser = (t) => laser(t, rng.range(W * 0.2, W * 0.8), rng.range(H * 0.2, H * 0.8), rng.range(0, Math.PI));
+    const crossfire = (t) => {
+      const x = rng.range(W * 0.3, W * 0.7);
+      const y = rng.range(H * 0.3, H * 0.7);
+      const a = rng.range(0, Math.PI);
+      laser(t, x, y, a);
+      laser(t, x, y, a + Math.PI / 2 + rng.range(-0.25, 0.25));
+    };
+    const drone = (t) => {
+      const p = edgePoint(rng, 30);
+      ev.push({ t, type: 'drone', x: p.x, y: p.y, speed: rng.range(135, 165) * mul, life: 9 });
+    };
+    const ring = (t) => ev.push({
+      t, type: 'ring', x: rng.range(W * 0.25, W * 0.75), y: rng.range(H * 0.25, H * 0.75),
+      speed: rng.range(210, 250) * mul, warn: 0.8, gapAngle: rng.range(0, TAU), gapSize: 0.95, thickness: 12,
+    });
+    const well = (t) => ev.push({
+      t, type: 'well', x: rng.range(W * 0.2, W * 0.8), y: rng.range(H * 0.2, H * 0.8), warn: 0.7, life: 5.5, coreR: 22, pullR: 280, strength: 900,
+    });
+    const swarm = (t) => {
+      const p = edgePoint(rng, 60);
+      const v = aimAcross(rng, p, rng.range(380, 460) * mul);
+      const count = rng.int(5, 7);
+      const nx = -v.vy / Math.hypot(v.vx, v.vy);
+      const ny = v.vx / Math.hypot(v.vx, v.vy);
+      for (let i = 0; i < count; i++) {
+        const off = (i - (count - 1) / 2) * 34;
+        ev.push({ t: t + i * 0.05, type: 'debris', x: p.x + nx * off, y: p.y + ny * off, vx: v.vx, vy: v.vy, r: rng.range(8, 12), spin: rng.range(-4, 4) });
+      }
+    };
+    const burst = (t) => ev.push({
+      t, type: 'burst', x: rng.range(W * 0.2, W * 0.8), y: rng.range(H * 0.2, H * 0.8), warn: 0.6, count: rng.int(10, 14), speed: rng.range(240, 290) * mul, rot: rng.range(0, TAU),
+    });
+
+    if (overdrive) {
+      every(rng, t0, t1, 0.6, 0.3, (t) => shard(t, rng.chance(0.12)));
+      every(rng, t0, t1, 0.75 / mul, 0.3, (t) => debris(t, 170, 260, 12, 30));
+      every(rng, t0 + 0.5, t1, 2.6 / mul, 0.3, (t) => (rng.chance(0.4) ? crossfire(t) : randomLaser(t)));
+      every(rng, t0 + 1, t1, 3.6 / mul, 0.3, drone);
+      every(rng, t0 + 1.5, t1, 4.2 / mul, 0.3, (t) => (rng.chance(0.5) ? ring(t) : swarm(t)));
+      every(rng, t0 + 0.8, t1, 2.6 / mul, 0.3, burst);
+      well(t0 + rng.range(1, 6));
+    } else {
+      switch (k) {
+        case 0: // warm-up: immediate flow with a shard right next to spawn
+          ev.push({ t: 0.6, type: 'shard', x: W / 2 + rng.range(-160, 160), y: H / 2 + rng.range(-90, 90), golden: false });
+          every(rng, t0 + 1.2, t1, 0.75, 0.25, (t) => shard(t));
+          every(rng, t0 + 1.0, t1, 0.95, 0.3, (t) => debris(t, 130, 200, 14, 34));
+          break;
+        case 1:
+          every(rng, t0, t1, 0.8, 0.25, (t) => shard(t));
+          every(rng, t0, t1, 1.3, 0.3, (t) => debris(t, 140, 210, 14, 30));
+          every(rng, t0 + 0.4, t1, 2.2, 0.2, randomLaser);
+          break;
+        case 2:
+          every(rng, t0, t1, 0.8, 0.25, (t) => shard(t));
+          every(rng, t0 + 0.3, t1, 2.4, 0.2, (t) => { drone(t); if (rng.chance(0.45)) drone(t + 0.3); });
+          every(rng, t0, t1, 1.5, 0.3, (t) => debris(t, 140, 210, 14, 30));
+          every(rng, t0 + 2, t1, 4.2, 0.2, randomLaser);
+          break;
+        case 3:
+          every(rng, t0, t1, 0.85, 0.25, (t) => shard(t));
+          every(rng, t0 + 1.2, t1, 3.0, 0.2, (t) => shard(t, true));
+          every(rng, t0 + 0.4, t1, 2.8, 0.2, ring);
+          well(t0 + rng.range(0.5, 2));
+          well(t0 + rng.range(5, 7));
+          every(rng, t0, t1, 1.6, 0.3, (t) => debris(t, 150, 220, 14, 28));
+          every(rng, t0 + 3, t1, 5, 0.2, drone);
+          break;
+        case 4:
+          every(rng, t0, t1, 0.8, 0.25, (t) => shard(t));
+          every(rng, t0 + 0.3, t1, 2.6, 0.2, crossfire);
+          every(rng, t0 + 1.4, t1, 3.0, 0.2, swarm);
+          every(rng, t0, t1, 1.6, 0.3, (t) => debris(t, 160, 240, 12, 26));
+          break;
+        default: // 5: Core Meltdown — dense shrapnel, double shard rate
+          every(rng, t0, t1, 0.4, 0.25, (t) => shard(t, rng.chance(0.1)));
+          every(rng, t0 + 0.2, t1, 1.4, 0.2, burst);
+          every(rng, t0, t1, 0.9, 0.3, (t) => debris(t, 170, 250, 12, 26));
+          every(rng, t0 + 2.5, t1, 4.5, 0.2, randomLaser);
+          break;
+      }
+    }
+    ev.sort((a, b) => a.t - b.t);
+    return ev;
+  }
+
+  /* ======================================================================
+   * 2. AUDIO SYNTH — every sound is synthesized; no audio files (ADR 0001).
+   * ==================================================================== */
+  class AudioSynth {
+    constructor() {
+      this.ctx = null;
+      this.master = null;
+      this.muted = false;
+      this.ducked = false;
+      this.musicOn = false;
+      this.nextNote = 0;
+      this.step16 = 0;
+      this.lastPlayed = new Map();
+    }
+
+    /** Browsers only allow audio after a user gesture; call from any input handler. */
+    unlock() {
+      if (this.ctx) {
+        if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+        return;
+      }
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      try {
+        this.ctx = new AC();
+        const comp = this.ctx.createDynamicsCompressor();
+        comp.threshold.value = -14;
+        comp.ratio.value = 4;
+        this.master = this.ctx.createGain();
+        this.master.gain.value = 0;
+        this.master.connect(comp).connect(this.ctx.destination);
+        this.sfx = this.ctx.createGain();
+        this.sfx.gain.value = 0.9;
+        this.sfx.connect(this.master);
+        this.music = this.ctx.createGain();
+        this.music.gain.value = 0.35;
+        this.music.connect(this.master);
+        const len = Math.floor(this.ctx.sampleRate * 1);
+        this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+        const data = this.noiseBuf.getChannelData(0);
+        for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+        this.applyGain();
+      } catch {
+        this.ctx = null;
+      }
+    }
+
+    setMuted(muted) { this.muted = muted; this.applyGain(); }
+    setDucked(ducked) { this.ducked = ducked; this.applyGain(); }
+
+    applyGain() {
+      if (!this.ctx || !this.master) return;
+      const now = this.ctx.currentTime;
+      this.master.gain.cancelScheduledValues(now);
+      this.master.gain.setTargetAtTime(this.muted || this.ducked ? 0 : 0.6, now, 0.03);
+    }
+
+    ready() { return Boolean(this.ctx) && this.ctx.state === 'running' && !this.muted; }
+
+    tone({ type = 'sine', freq = 440, freqEnd = 0, dur = 0.12, vol = 0.2, delay = 0, at = 0, out = null }) {
+      const c = this.ctx;
+      const t = (at || c.currentTime) + delay;
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t);
+      if (freqEnd) osc.frequency.exponentialRampToValueAtTime(Math.max(1, freqEnd), t + dur);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(g).connect(out || this.sfx);
+      osc.start(t);
+      osc.stop(t + dur + 0.03);
+    }
+
+    noise({ dur = 0.2, vol = 0.2, filter = 'lowpass', freq = 1000, freqEnd = 0, q = 0.8, delay = 0, at = 0, out = null }) {
+      const c = this.ctx;
+      const t = (at || c.currentTime) + delay;
+      const src = c.createBufferSource();
+      src.buffer = this.noiseBuf;
+      const f = c.createBiquadFilter();
+      f.type = filter;
+      f.frequency.setValueAtTime(freq, t);
+      if (freqEnd) f.frequency.exponentialRampToValueAtTime(Math.max(1, freqEnd), t + dur);
+      f.Q.value = q;
+      const g = c.createGain();
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      src.connect(f).connect(g).connect(out || this.sfx);
+      src.start(t);
+      src.stop(t + dur + 0.03);
+    }
+
+    /** Rate-limits identical sounds so a 10-shard magnet sweep doesn't clip. */
+    play(name, data = {}) {
+      if (!this.ready()) return;
+      const now = this.ctx.currentTime;
+      if (now - (this.lastPlayed.get(name) || 0) < 0.035) return;
+      this.lastPlayed.set(name, now);
+      switch (name) {
+        case 'shard': {
+          const semis = Math.min(data.mult || 1, 10) * 2;
+          this.tone({ type: 'triangle', freq: 660 * 2 ** (semis / 12), freqEnd: 990 * 2 ** (semis / 12), dur: 0.09, vol: 0.16 });
+          break;
+        }
+        case 'core':
+          [0, 4, 7, 12].forEach((s, i) => this.tone({ type: 'square', freq: 523 * 2 ** (s / 12), dur: 0.1, vol: 0.07, delay: i * 0.05 }));
+          break;
+        case 'graze': this.tone({ type: 'sine', freq: 1800, freqEnd: 2600, dur: 0.06, vol: 0.1 }); break;
+        case 'phase': this.tone({ type: 'sawtooth', freq: 300, freqEnd: 1400, dur: 0.14, vol: 0.08 }); break;
+        case 'dash': this.noise({ dur: 0.18, vol: 0.2, filter: 'bandpass', freq: 600, freqEnd: 3200, q: 2 }); break;
+        case 'warn':
+          this.tone({ type: 'square', freq: 880, dur: 0.06, vol: 0.05 });
+          this.tone({ type: 'square', freq: 880, dur: 0.06, vol: 0.05, delay: 0.12 });
+          break;
+        case 'laser':
+          this.tone({ type: 'sawtooth', freq: 130, freqEnd: 70, dur: 0.55, vol: 0.09 });
+          this.noise({ dur: 0.3, vol: 0.06, filter: 'highpass', freq: 3000 });
+          break;
+        case 'drone': this.tone({ type: 'square', freq: 220, freqEnd: 330, dur: 0.08, vol: 0.04 }); break;
+        case 'boom':
+          this.noise({ dur: 0.45, vol: 0.3, filter: 'lowpass', freq: 1800, freqEnd: 120 });
+          this.tone({ type: 'sine', freq: 140, freqEnd: 40, dur: 0.4, vol: 0.25 });
+          break;
+        case 'shield':
+          this.tone({ type: 'triangle', freq: 1200, freqEnd: 300, dur: 0.35, vol: 0.18 });
+          this.noise({ dur: 0.3, vol: 0.15, filter: 'bandpass', freq: 2000, freqEnd: 400 });
+          break;
+        case 'breach':
+          this.noise({ dur: 0.9, vol: 0.4, filter: 'lowpass', freq: 2400, freqEnd: 60 });
+          this.tone({ type: 'sawtooth', freq: 220, freqEnd: 30, dur: 0.9, vol: 0.16 });
+          break;
+        case 'revive':
+        case 'reward':
+          [0, 5, 7, 12, 17].forEach((s, i) => this.tone({ type: 'triangle', freq: 440 * 2 ** (s / 12), dur: 0.12, vol: 0.1, delay: i * 0.06 }));
+          break;
+        case 'segment':
+          this.tone({ type: 'square', freq: 392, dur: 0.08, vol: 0.06 });
+          this.tone({ type: 'square', freq: 784, dur: 0.12, vol: 0.06, delay: 0.09 });
+          break;
+        case 'ui': this.tone({ type: 'triangle', freq: 880, dur: 0.04, vol: 0.06 }); break;
+        default: break;
+      }
+    }
+
+    startMusic() {
+      if (!this.ctx) return;
+      this.musicOn = true;
+      this.step16 = 0;
+      this.nextNote = this.ctx.currentTime + 0.06;
+    }
+
+    stopMusic() { this.musicOn = false; }
+
+    /** Look-ahead scheduler driven by the game loop; intensity 0..1 thickens the beat. */
+    updateMusic(intensity) {
+      if (!this.musicOn || !this.ready()) return;
+      const now = this.ctx.currentTime;
+      if (this.nextNote < now - 0.2) this.nextNote = now + 0.05; // tab was throttled
+      const sixteenth = 60 / (120 + intensity * 16) / 4;
+      while (this.nextNote < now + 0.12) {
+        this.scheduleStep(this.step16, this.nextNote, intensity);
+        this.nextNote += sixteenth;
+        this.step16 = (this.step16 + 1) % 64;
+      }
+    }
+
+    scheduleStep(step, at, intensity) {
+      const out = this.music;
+      const roots = [55, 43.65, 65.41, 49];
+      const root = roots[Math.floor(step / 16) % 4];
+      if (step % 4 === 0) this.tone({ type: 'sine', freq: 130, freqEnd: 42, dur: 0.18, vol: 0.5, at, out });
+      if (step % 4 === 2) this.noise({ dur: 0.04, vol: 0.12, filter: 'highpass', freq: 7000, at, out });
+      if (intensity > 0.45 && step % 2 === 1) this.noise({ dur: 0.025, vol: 0.06, filter: 'highpass', freq: 9000, at, out });
+      if (step % 8 === 6 || step % 8 === 3) this.tone({ type: 'sawtooth', freq: root * 2, dur: 0.14, vol: 0.12, at, out });
+      if (intensity > 0.7 && step % 16 === 10) this.tone({ type: 'square', freq: root * 8, dur: 0.1, vol: 0.04, at, out });
+    }
+  }
+
+  /* ======================================================================
+   * 3. AD MANAGER — one interface, swappable providers (ADR 0003).
+   * Simulated: local countdown modal. SDK Hooks: Poki → CrazyGames →
+   * Google H5 Games Ads (adBreak) → an adBreak-shaped stub when none loaded.
+   * ==================================================================== */
+  const AD_PLACEMENTS = deepFreeze({
+    revive: { label: 'Second Chance Revive' },
+    double_scrap: { label: '2x Run Scrap Payout' },
+    scrap_topup: { label: '+100 Hangar Scrap' },
+  });
+
+  function safeCall(fn) {
+    try { const r = fn(); if (r && typeof r.catch === 'function') r.catch(() => {}); } catch { /* SDK hooks must never break gameplay */ }
+  }
+
+  function withTimeout(promise, ms) {
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => resolve({ granted: false, reason: 'timeout' }), ms);
+      promise.then(
+        (v) => { clearTimeout(timer); resolve(v); },
+        () => { clearTimeout(timer); resolve({ granted: false, reason: 'error' }); },
+      );
+    });
+  }
+
+  /** Drives a Google H5 Games Ads–style adBreak() reward placement. */
+  function runAdBreak(adBreakFn, placement) {
+    return new Promise((resolve) => {
+      let viewed = false;
+      adBreakFn({
+        type: 'reward',
+        name: placement,
+        beforeAd() {},
+        afterAd() {},
+        beforeReward(showAdFn) { showAdFn(); },
+        adDismissed() {},
+        adViewed() { viewed = true; },
+        adBreakDone(info) { resolve({ granted: viewed, reason: (info && info.breakStatus) || 'done' }); },
+      });
+    });
+  }
+
+  function createSdkAdapters(stubAdBreak) {
+    const w = () => globalThis;
+    return [
+      {
+        id: 'poki',
+        detect: () => typeof w().PokiSDK?.rewardedBreak === 'function',
+        init: async () => { await w().PokiSDK.init(); },
+        rewarded: async () => ({ granted: Boolean(await w().PokiSDK.rewardedBreak()), reason: 'poki' }),
+        gameplayStart: () => w().PokiSDK.gameplayStart(),
+        gameplayStop: () => w().PokiSDK.gameplayStop(),
+        banner: async () => false, // Poki renders display ads around the game frame itself
+      },
+      {
+        id: 'crazygames',
+        detect: () => typeof w().CrazyGames?.SDK?.ad?.requestAd === 'function',
+        init: async () => { if (typeof w().CrazyGames.SDK.init === 'function') await w().CrazyGames.SDK.init(); },
+        rewarded: () => new Promise((resolve) => {
+          w().CrazyGames.SDK.ad.requestAd('rewarded', {
+            adStarted() {},
+            adFinished: () => resolve({ granted: true, reason: 'crazygames' }),
+            adError: (e) => resolve({ granted: false, reason: String((e && e.code) || 'error') }),
+          });
+        }),
+        gameplayStart: () => w().CrazyGames.SDK.game.gameplayStart(),
+        gameplayStop: () => w().CrazyGames.SDK.game.gameplayStop(),
+        banner: async (slot, size) => {
+          await w().CrazyGames.SDK.banner.requestBanner({ id: slot.id, width: size.w, height: size.h });
+          return true;
+        },
+      },
+      {
+        id: 'h5',
+        detect: () => typeof w().adBreak === 'function',
+        init: async () => { if (typeof w().adConfig === 'function') w().adConfig({ preloadAdBreaks: 'on', sound: 'on' }); },
+        rewarded: (placement) => runAdBreak(w().adBreak, placement),
+        gameplayStart: () => {},
+        gameplayStop: () => {},
+        banner: async () => false, // AdSense display units need their own <ins> tag + CSP change (ADR 0003)
+      },
+      {
+        id: 'stub',
+        detect: () => true,
+        init: async () => {},
+        rewarded: (placement) => runAdBreak(stubAdBreak, placement),
+        gameplayStart: () => {},
+        gameplayStop: () => {},
+        banner: async () => false,
+      },
+    ];
+  }
+
+  class AdManager {
+    constructor({ mode, ui, audio, onModeChange }) {
+      this.mode = mode === 'sdk' ? 'sdk' : 'simulated';
+      this.ui = ui;
+      this.audio = audio;
+      this.onModeChange = onModeChange;
+      this.busy = false;
+      this.adapters = createSdkAdapters((opts) => this.stubAdBreak(opts));
+      this.active = null;
+      this.initPromise = null;
+    }
+
+    sdk() {
+      if (!this.active) this.active = this.adapters.find((a) => a.detect());
+      if (!this.initPromise) this.initPromise = withTimeout(this.active.init().then(() => ({ granted: true })), 8000);
+      return this.active;
+    }
+
+    setMode(mode) {
+      this.mode = mode === 'sdk' ? 'sdk' : 'simulated';
+      this.onModeChange(this.mode);
+      this.renderBanner();
+    }
+
+    toggleMode() { this.setMode(this.mode === 'sdk' ? 'simulated' : 'sdk'); }
+
+    providerLabel() { return this.mode === 'sdk' ? `SDK Hooks (${this.sdk().id})` : 'Simulated'; }
+
+    isRewardedAvailable() { return !this.busy; }
+
+    gameplayStart() { if (this.mode === 'sdk') safeCall(() => this.sdk().gameplayStart()); }
+    gameplayStop() { if (this.mode === 'sdk') safeCall(() => this.sdk().gameplayStop()); }
+
+    /** Resolves {granted, reason}. Never rejects: a broken ad must not break the game. */
+    async showRewarded(placement) {
+      if (!AD_PLACEMENTS[placement]) return { granted: false, reason: 'unknown-placement' };
+      if (this.busy) return { granted: false, reason: 'busy' };
+      this.busy = true;
+      this.audio.setDucked(true);
+      try {
+        if (this.mode === 'simulated') {
+          return await this.countdown(placement, CONFIG.ads.simulatedSeconds, 'Sponsored · Simulated');
+        }
+        const adapter = this.sdk();
+        await this.initPromise;
+        return await withTimeout(adapter.rewarded(placement), CONFIG.ads.sdkTimeoutMs);
+      } catch {
+        return { granted: false, reason: 'error' };
+      } finally {
+        this.busy = false;
+        this.audio.setDucked(false);
+      }
+    }
+
+    /** Stand-in for window.adBreak when no SDK script is present (local dev / tests). */
+    stubAdBreak(opts) {
+      if (opts.type !== 'reward') { opts.adBreakDone({ breakStatus: 'notReady' }); return; }
+      opts.beforeReward(() => {
+        opts.beforeAd();
+        this.countdown(opts.name, CONFIG.ads.stubSeconds, 'SDK Hooks · adBreak() stub').then((r) => {
+          opts.afterAd();
+          if (r.granted) opts.adViewed(); else opts.adDismissed();
+          opts.adBreakDone({ breakStatus: r.granted ? 'viewed' : 'dismissed' });
+        });
+      });
+    }
+
+    countdown(placement, seconds, kicker) {
+      return new Promise((resolve) => {
+        const start = performance.now();
+        let done = false;
+        let timer = 0;
+        const finish = (granted, reason) => {
+          if (done) return;
+          done = true;
+          clearInterval(timer);
+          this.ui.closeAdModal();
+          resolve({ granted, reason });
+        };
+        this.ui.openAdModal({ label: AD_PLACEMENTS[placement]?.label || placement, kicker, onClose: () => finish(false, 'dismissed') });
+        const tick = () => {
+          const elapsed = (performance.now() - start) / 1000;
+          this.ui.setAdCountdown(Math.max(0, Math.ceil(seconds - elapsed)), Math.min(1, elapsed / seconds));
+          if (elapsed >= seconds) finish(true, 'viewed');
+        };
+        tick();
+        timer = setInterval(tick, 100);
+      });
+    }
+
+    renderBanner() {
+      const slot = this.ui.el.bannerSlot;
+      const small = globalThis.matchMedia('(max-width: 760px), (max-height: 520px)').matches;
+      const size = small ? { w: 320, h: 50 } : { w: 728, h: 90 };
+      this.ui.setBannerPlaceholder(`${size.w}×${size.h} ad slot · ${this.mode === 'sdk' ? 'SDK Hooks' : 'Simulated'}`);
+      if (this.mode !== 'sdk') return;
+      const adapter = this.sdk();
+      Promise.resolve()
+        .then(() => this.initPromise)
+        .then(() => adapter.banner(slot, size))
+        .catch(() => false);
+    }
+  }
+
+  /* ======================================================================
+   * 4. GAME ENGINE — pure simulation, no DOM. Fixed 120 Hz step so a run is
+   * identical on 60 Hz and 120 Hz displays (ADR 0002).
+   * ==================================================================== */
+  function makeVerts(id, n) {
+    const r = mulberry32(Math.imul(id, 2654435761));
+    const verts = [];
+    for (let i = 0; i < n; i++) verts.push([(i / n) * TAU + (r() - 0.5) * 0.5, 0.72 + r() * 0.38]);
+    return verts;
+  }
+
+  function compact(arr) {
+    let j = 0;
+    for (let i = 0; i < arr.length; i++) if (!arr[i].dead) arr[j++] = arr[i];
+    arr.length = j;
+  }
+
+  class GameEngine {
+    constructor({ seed, loadout, onEvent }) {
+      this.seed = seed;
+      this.loadout = loadout;
+      this.onEvent = onEvent || (() => {});
+      this.reset();
+    }
+
+    reset() {
+      this.tick = 0;
+      this.time = 0;
+      this.acc = 0;
+      this.state = 'running';
+      this.hitstop = 0;
+      this.lastFreezeAt = -1;
+      this.score = 0;
+      this.chain = 0;
+      this.mult = 1;
+      this.maxMult = 1;
+      this.chainTimer = 0;
+      this.pendingDash = false;
+      this.input = { moveX: 0, moveY: 0 };
+      this.player = {
+        x: W / 2, y: H / 2, vx: 0, vy: 0, ex: 0, ey: 0, r: CONFIG.player.radius,
+        dirX: 0, dirY: -1, dashT: 0, dashInv: 0, dashDX: 0, dashDY: -1, dashCd: 0, invuln: 0,
+        shield: this.loadout.shieldCharges, dragActive: false, tx: W / 2, ty: H / 2,
+      };
+      this.hazards = [];
+      this.shards = [];
+      this.nextId = 1;
+      this.schedule = [];
+      this.schedIndex = 0;
+      this.generated = 0;
+      this.segments = Array.from({ length: SEGMENTS }, () => ({ maxMult: 1, closeCall: false }));
+      this.lastSeg = -1;
+      this.overdrive = false;
+      this.revived = false;
+      this.deathTime = null;
+      this.stats = { shards: 0, cores: 0, grazes: 0, phases: 0, baits: 0, dashes: 0, shieldHits: 0 };
+      this.ensureSchedule(0);
+    }
+
+    segmentIndex() { return Math.floor(this.time / SEGMENT_SECONDS); }
+
+    ensureSchedule(time) {
+      while (this.generated * SEGMENT_SECONDS < time + 3) {
+        const chunk = generateSegment(this.seed, this.generated);
+        if (this.schedIndex > 400) { // overdrive can run long; drop consumed events
+          this.schedule = this.schedule.slice(this.schedIndex);
+          this.schedIndex = 0;
+        }
+        for (const e of chunk) this.schedule.push(e);
+        this.generated++;
+      }
+    }
+
+    /** Advances by real frame time. Returns the number of fixed steps simulated. */
+    update(frameDt, frameInput) {
+      if (this.state !== 'running') return 0;
+      const dt = Math.min(Math.max(frameDt, 0), MAX_FRAME_DT);
+      this.applyInput(frameInput);
+      if (this.hitstop > 0) { // freeze-frame: the world holds still, input still queues
+        this.hitstop = Math.max(0, this.hitstop - dt);
+        return 0;
+      }
+      this.acc += dt;
+      let steps = 0;
+      while (this.acc >= STEP && this.state === 'running') {
+        this.acc -= STEP;
+        this.step();
+        steps++;
+        if (this.hitstop > 0) break;
+      }
+      return steps;
+    }
+
+    applyInput(inp) {
+      if (!inp) return;
+      this.input.moveX = inp.moveX || 0;
+      this.input.moveY = inp.moveY || 0;
+      if (inp.dash) this.pendingDash = true;
+      const p = this.player;
+      if (inp.dragging) {
+        if (!p.dragActive) { p.dragActive = true; p.tx = p.x; p.ty = p.y; }
+        p.tx = Math.min(W - p.r, Math.max(p.r, p.tx + (inp.dragDX || 0)));
+        p.ty = Math.min(H - p.r, Math.max(p.r, p.ty + (inp.dragDY || 0)));
+      } else {
+        p.dragActive = false;
+      }
+    }
+
+    step() {
+      const dt = STEP;
+      this.tick++;
+      this.time = this.tick * STEP;
+      const seg = this.segmentIndex();
+      if (seg !== this.lastSeg) {
+        this.lastSeg = seg;
+        this.onEvent('segment', { index: seg });
+      }
+      if (!this.overdrive && this.time >= RUN_SECONDS) {
+        this.overdrive = true;
+        this.onEvent('overdrive', {});
+      }
+      this.ensureSchedule(this.time);
+      while (this.schedIndex < this.schedule.length && this.schedule[this.schedIndex].t <= this.time) {
+        this.spawn(this.schedule[this.schedIndex++]);
+      }
+      this.updatePlayer(dt);
+      this.updateHazards(dt);
+      this.updateShards(dt);
+      this.updateCombo(dt);
+      this.score += (this.overdrive ? CONFIG.score.overdrivePerSecond : CONFIG.score.perSecond) * dt;
+      this.checkCollisions();
+    }
+
+    spawn(e) {
+      const id = this.nextId++;
+      switch (e.type) {
+        case 'shard':
+          this.shards.push({ id, x: e.x, y: e.y, golden: e.golden, age: 0, dead: false });
+          break;
+        case 'debris':
+          this.addHazard({ kind: 'debris', x: e.x, y: e.y, vx: e.vx, vy: e.vy, r: e.r, spin: e.spin, rot: 0, verts: makeVerts(id, 8) }, id);
+          break;
+        case 'drone':
+          this.addHazard({ kind: 'drone', x: e.x, y: e.y, vx: 0, vy: 0, r: 13, life: e.life, maxSpeed: e.speed }, id);
+          break;
+        case 'laser':
+          this.addHazard({ kind: 'laser', x: e.x, y: e.y, angle: e.angle, sweep: e.sweep, warn: e.warn, active: e.active, width: e.width, fired: false }, id);
+          break;
+        case 'ring':
+          this.addHazard({ kind: 'ring', x: e.x, y: e.y, speed: e.speed, warn: e.warn, gapAngle: e.gapAngle, gapSize: e.gapSize, thickness: e.thickness, radius: 0, maxR: 1600 }, id);
+          break;
+        case 'well':
+          this.addHazard({ kind: 'well', x: e.x, y: e.y, warn: e.warn, life: e.life, coreR: e.coreR, pullR: e.pullR, strength: e.strength }, id);
+          break;
+        case 'burst':
+          this.addHazard({ kind: 'burst', x: e.x, y: e.y, warn: e.warn, count: e.count, speed: e.speed, rot: e.rot }, id);
+          break;
+        default:
+          return;
+      }
+      this.onEvent('spawn', { kind: e.type, x: e.x, y: e.y });
+    }
+
+    addHazard(h, id) {
+      if (this.hazards.length >= MAX_HAZARDS && (h.kind === 'debris' || h.kind === 'shrapnel')) return;
+      h.id = id;
+      h.age = 0;
+      h.dead = false;
+      h.grazed = false;
+      h.phased = false;
+      if (h.r === undefined) h.r = 0;
+      this.hazards.push(h);
+    }
+
+    updatePlayer(dt) {
+      const P = CONFIG.player;
+      const p = this.player;
+      p.dashCd = Math.max(0, p.dashCd - dt);
+      p.invuln = Math.max(0, p.invuln - dt);
+      p.dashInv = Math.max(0, p.dashInv - dt);
+
+      let mx = this.input.moveX;
+      let my = this.input.moveY;
+      const ml = Math.hypot(mx, my);
+      if (ml > 1) { mx /= ml; my /= ml; }
+
+      if (this.pendingDash) {
+        this.pendingDash = false;
+        if (p.dashCd <= 0 && p.dashT <= 0) {
+          // Dash toward held keys; otherwise along the current heading (drag / idle).
+          const useInput = ml > 0.1;
+          p.dashDX = useInput ? mx : p.dirX;
+          p.dashDY = useInput ? my : p.dirY;
+          const dl = Math.hypot(p.dashDX, p.dashDY) || 1;
+          p.dashDX /= dl;
+          p.dashDY /= dl;
+          p.dashT = P.dashTime;
+          p.dashInv = P.dashTime + P.dashGrace;
+          p.dashCd = this.loadout.dashCooldown;
+          this.stats.dashes++;
+          this.onEvent('dash', { x: p.x, y: p.y, dx: p.dashDX, dy: p.dashDY });
+        }
+      }
+
+      if (p.dashT > 0) {
+        p.dashT -= dt;
+        p.vx = p.dashDX * P.dashSpeed;
+        p.vy = p.dashDY * P.dashSpeed;
+      } else if (p.dragActive) {
+        let vx = (p.tx - p.x) * P.dragGain;
+        let vy = (p.ty - p.y) * P.dragGain;
+        const sp = Math.hypot(vx, vy);
+        if (sp > P.dragMaxSpeed) { vx *= P.dragMaxSpeed / sp; vy *= P.dragMaxSpeed / sp; }
+        p.vx = vx;
+        p.vy = vy;
+      } else {
+        const k = Math.min(1, P.response * dt);
+        p.vx += (mx * P.speed - p.vx) * k;
+        p.vy += (my * P.speed - p.vy) * k;
+      }
+
+      const sp = Math.hypot(p.vx, p.vy);
+      if (sp > 40) { p.dirX = p.vx / sp; p.dirY = p.vy / sp; }
+
+      // Gravity wells tug the hull; the tug decays so escaping feels responsive.
+      const decay = Math.max(0, 1 - 3 * dt);
+      p.ex *= decay;
+      p.ey *= decay;
+      for (const h of this.hazards) {
+        if (h.kind !== 'well' || h.age < h.warn) continue;
+        const dx = h.x - p.x;
+        const dy = h.y - p.y;
+        const d = Math.hypot(dx, dy) || 1;
+        if (d < h.pullR) {
+          const f = h.strength * (1 - d / h.pullR);
+          p.ex += (dx / d) * f * dt;
+          p.ey += (dy / d) * f * dt;
+        }
+      }
+
+      p.x = Math.min(W - p.r, Math.max(p.r, p.x + (p.vx + p.ex) * dt));
+      p.y = Math.min(H - p.r, Math.max(p.r, p.y + (p.vy + p.ey) * dt));
+      // While dashing in drag mode keep the drag target glued to the hull so it doesn't snap back.
+      if (p.dragActive && p.dashT > 0) { p.tx = p.x; p.ty = p.y; }
+    }
+
+    updateHazards(dt) {
+      const p = this.player;
+      const spawned = [];
+      for (const h of this.hazards) {
+        h.age += dt;
+        switch (h.kind) {
+          case 'debris':
+          case 'shrapnel':
+            h.x += h.vx * dt;
+            h.y += h.vy * dt;
+            h.rot += h.spin * dt;
+            if (h.age > 2 && (h.x < -170 || h.x > W + 170 || h.y < -170 || h.y > H + 170)) h.dead = true;
+            break;
+          case 'drone': {
+            const dx = p.x - h.x;
+            const dy = p.y - h.y;
+            const d = Math.hypot(dx, dy) || 1;
+            const k = Math.min(1, 1.5 * dt);
+            h.vx += ((dx / d) * h.maxSpeed - h.vx) * k;
+            h.vy += ((dy / d) * h.maxSpeed - h.vy) * k;
+            h.x += h.vx * dt;
+            h.y += h.vy * dt;
+            if (h.age > h.life) { h.dead = true; this.onEvent('fizzle', { x: h.x, y: h.y }); }
+            break;
+          }
+          case 'laser':
+            if (!h.fired && h.age >= h.warn) { h.fired = true; this.onEvent('laserFire', { x: h.x, y: h.y }); }
+            if (h.age >= h.warn + h.active) h.dead = true;
+            break;
+          case 'ring':
+            if (h.age >= h.warn) h.radius = (h.age - h.warn) * h.speed;
+            if (h.radius > h.maxR) h.dead = true;
+            break;
+          case 'well':
+            if (h.age > h.warn + h.life) h.dead = true;
+            break;
+          case 'burst':
+            if (h.age >= h.warn) {
+              h.dead = true;
+              for (let i = 0; i < h.count; i++) {
+                const a = h.rot + (i / h.count) * TAU;
+                spawned.push({ kind: 'shrapnel', x: h.x, y: h.y, vx: Math.cos(a) * h.speed, vy: Math.sin(a) * h.speed, r: 5, spin: 6, rot: a, verts: null });
+              }
+              this.onEvent('burst', { x: h.x, y: h.y });
+            }
+            break;
+          default:
+            break;
+        }
+      }
+      for (const s of spawned) this.addHazard(s, this.nextId++);
+
+      // Hunter drones can be baited into each other.
+      for (let i = 0; i < this.hazards.length; i++) {
+        const a = this.hazards[i];
+        if (a.kind !== 'drone' || a.dead) continue;
+        for (let j = i + 1; j < this.hazards.length; j++) {
+          const b = this.hazards[j];
+          if (b.kind !== 'drone' || b.dead) continue;
+          if (Math.hypot(a.x - b.x, a.y - b.y) < a.r + b.r) {
+            a.dead = true;
+            b.dead = true;
+            this.stats.baits++;
+            this.award(CONFIG.score.bait, (a.x + b.x) / 2, (a.y + b.y) / 2, 'BAITED', 'bait');
+            break;
+          }
+        }
+      }
+      compact(this.hazards);
+    }
+
+    updateShards(dt) {
+      const p = this.player;
+      const magnet = this.loadout.magnetRadius;
+      for (const s of this.shards) {
+        s.age += dt;
+        if (s.age > CONFIG.shard.life) { s.dead = true; continue; }
+        let dx = p.x - s.x;
+        let dy = p.y - s.y;
+        let d = Math.hypot(dx, dy);
+        if (magnet > 0 && d < magnet && d > 0) {
+          const move = Math.min(d, CONFIG.shard.magnetSpeed * dt);
+          s.x += (dx / d) * move;
+          s.y += (dy / d) * move;
+          dx = p.x - s.x;
+          dy = p.y - s.y;
+          d = Math.hypot(dx, dy);
+        }
+        if (d < CONFIG.shard.pickupRadius) {
+          s.dead = true;
+          if (s.golden) {
+            this.stats.cores++;
+            this.award(CONFIG.score.core, s.x, s.y, '', 'core');
+            this.addChain(CONFIG.shard.coreChain);
+          } else {
+            this.stats.shards++;
+            this.award(CONFIG.score.shard, s.x, s.y, '', 'shard');
+            this.addChain(1);
+          }
+        }
+      }
+      compact(this.shards);
+    }
+
+    addChain(n) {
+      this.chain += n;
+      this.mult = Math.min(CONFIG.combo.maxMult, 1 + Math.floor(this.chain / CONFIG.combo.perStep));
+      this.maxMult = Math.max(this.maxMult, this.mult);
+      this.chainTimer = CONFIG.combo.window;
+      const seg = this.segmentIndex();
+      if (seg < SEGMENTS) this.segments[seg].maxMult = Math.max(this.segments[seg].maxMult, this.mult);
+    }
+
+    resetChain() {
+      if (this.chain > 0) this.onEvent('comboLost', {});
+      this.chain = 0;
+      this.mult = 1;
+      this.chainTimer = 0;
+    }
+
+    updateCombo(dt) {
+      if (this.chain <= 0) return;
+      this.chainTimer -= dt;
+      if (this.chainTimer <= 0) this.resetChain();
+    }
+
+    award(base, x, y, label, kind) {
+      this.score += base * this.mult;
+      const text = `${label ? `${label} ` : ''}+${base}${this.mult > 1 ? ` x${this.mult}` : ''}`;
+      this.onEvent(kind, { x, y, text, mult: this.mult });
+    }
+
+    freeze(seconds) {
+      if (this.time - this.lastFreezeAt < CONFIG.graze.hitstopGap) return;
+      this.lastFreezeAt = this.time;
+      this.hitstop = Math.max(this.hitstop, seconds);
+    }
+
+    laserAngle(h) {
+      const k = Math.min(1, Math.max(0, (h.age - h.warn) / h.active));
+      return h.angle + h.sweep * k;
+    }
+
+    /** Distance from (x,y) to the hazard's lethal surface; Infinity when not lethal yet. */
+    hazardGap(h, x, y) {
+      switch (h.kind) {
+        case 'debris':
+        case 'shrapnel':
+        case 'drone':
+          return Math.hypot(x - h.x, y - h.y) - h.r;
+        case 'laser': {
+          if (h.age < h.warn) return Infinity;
+          const a = this.laserAngle(h);
+          return Math.abs((x - h.x) * Math.sin(a) - (y - h.y) * Math.cos(a)) - h.width / 2;
+        }
+        case 'ring': {
+          if (h.age < h.warn) return Infinity;
+          let a = Math.atan2(y - h.y, x - h.x) - h.gapAngle;
+          a = Math.atan2(Math.sin(a), Math.cos(a));
+          if (Math.abs(a) < h.gapSize / 2) return Infinity;
+          return Math.abs(Math.hypot(x - h.x, y - h.y) - h.radius) - h.thickness / 2;
+        }
+        case 'well':
+          return h.age < h.warn ? Infinity : Math.hypot(x - h.x, y - h.y) - h.coreR;
+        default:
+          return Infinity;
+      }
+    }
+
+    checkCollisions() {
+      const p = this.player;
+      for (const h of this.hazards) {
+        if (h.dead) continue;
+        const gap = this.hazardGap(h, p.x, p.y);
+        if (gap === Infinity) continue;
+        if (gap < p.r) {
+          if (p.dashInv > 0) {
+            if (!h.phased) {
+              h.phased = true;
+              h.grazed = true;
+              this.stats.phases++;
+              this.award(CONFIG.score.phase, p.x, p.y, 'PHASE', 'phase');
+              this.freeze(CONFIG.graze.hitstop);
+            }
+            continue;
+          }
+          if (p.invuln > 0) continue;
+          this.hit(h);
+          if (this.state !== 'running') return;
+          continue;
+        }
+        if (gap < p.r + CONFIG.graze.margin && !h.grazed && p.invuln <= 0) {
+          h.grazed = true;
+          this.stats.grazes++;
+          this.chainTimer = Math.min(CONFIG.combo.window, this.chainTimer + CONFIG.combo.grazeRefill);
+          this.award(CONFIG.score.graze, p.x, p.y, 'GRAZE', 'graze');
+          this.freeze(CONFIG.graze.hitstop);
+        }
+      }
+    }
+
+    markCloseCall() {
+      const seg = this.segmentIndex();
+      if (seg < SEGMENTS) this.segments[seg].closeCall = true;
+    }
+
+    hit(h) {
+      const p = this.player;
+      this.markCloseCall();
+      if (p.shield > 0) {
+        p.shield--;
+        this.stats.shieldHits++;
+        p.invuln = CONFIG.shield.invuln;
+        this.resetChain();
+        this.onEvent('shield', { x: p.x, y: p.y, left: p.shield });
+        if (this.loadout.shockwave) {
+          for (const o of this.hazards) {
+            if ((o.kind === 'debris' || o.kind === 'shrapnel' || o.kind === 'drone') && Math.hypot(o.x - p.x, o.y - p.y) < CONFIG.shield.shockwaveRadius) o.dead = true;
+          }
+          this.onEvent('shockwave', { x: p.x, y: p.y, r: CONFIG.shield.shockwaveRadius });
+        }
+        return;
+      }
+      this.state = 'breach';
+      this.deathTime = this.time;
+      this.onEvent('breach', { x: p.x, y: p.y, kind: h.kind });
+    }
+
+    /** Second Chance: resume at the exact breach timestamp with invulnerability. */
+    revive() {
+      if (this.state !== 'breach' || this.revived) return false;
+      this.revived = true;
+      this.state = 'running';
+      this.deathTime = null;
+      this.player.invuln = CONFIG.revive.invuln;
+      this.player.vx = 0;
+      this.player.vy = 0;
+      this.resetChain();
+      this.markCloseCall();
+      this.onEvent('revive', { x: this.player.x, y: this.player.y });
+      return true;
+    }
+
+    /** Ends the run (breach declined, or player abandoned from pause). */
+    end() {
+      if (this.deathTime === null) this.deathTime = this.time;
+      this.state = 'over';
+    }
+
+    results() {
+      const survival = this.deathTime === null ? this.time : this.deathTime;
+      const deathSeg = survival < RUN_SECONDS ? Math.min(SEGMENTS - 1, Math.floor(survival / SEGMENT_SECONDS)) : -1;
+      let timeline = buildTimeline(this.segments, deathSeg);
+      if (deathSeg === -1) timeline += ` ${GLYPH.overdrive}+${Math.floor(survival - RUN_SECONDS)}s${GLYPH.crash}`;
+      return {
+        seed: this.seed,
+        survival,
+        score: Math.floor(this.score),
+        maxMult: this.maxMult,
+        timeline,
+        revived: this.revived,
+        overdrive: survival >= RUN_SECONDS,
+        tiers: this.loadout.tiers,
+        stats: { ...this.stats },
+      };
+    }
+  }
+
+  /* ======================================================================
+   * 5. RENDERER — procedural Canvas 2D: glows via additive layers, no assets.
+   * The world is a fixed 1280×720 arena (so seeds are fair everywhere); on
+   * portrait screens the view rotates 90° instead of shrinking (ADR 0004).
+   * ==================================================================== */
+  const COLORS = Object.freeze({
+    debris: '#ff4d5e', shrapnel: '#ffb03b', drone: '#ff8c1a', laser: '#ff2b4e', ring: '#ff3b8d',
+    well: '#a64dff', shard: '#9bf6ff', core: '#ffd23f', grid: 'rgba(80, 120, 255, 0.08)',
+  });
+
+  class Renderer {
+    constructor(canvas, { reducedMotion }) {
+      this.canvas = canvas;
+      this.ctx = canvas.getContext('2d', { alpha: false });
+      this.reducedMotion = reducedMotion;
+      this.particles = [];
+      this.popups = [];
+      this.trail = [];
+      this.trauma = 0;
+      this.flash = 0;
+      this.clock = 0;
+      this.theme = THEMES[0];
+      this.view = { s: 1, dpr: 1, portrait: false, ox: 0, oy: 0, cssW: 1, cssH: 1 };
+      this.stars = Array.from({ length: 90 }, () => ({ x: Math.random() * W, y: Math.random() * H, z: 0.3 + Math.random() * 0.7 }));
+    }
+
+    resize(cssW, cssH) {
+      const dpr = Math.min(globalThis.devicePixelRatio || 1, 2);
+      this.canvas.width = Math.max(1, Math.round(cssW * dpr));
+      this.canvas.height = Math.max(1, Math.round(cssH * dpr));
+      const portrait = cssH > cssW * 1.15;
+      const ww = portrait ? H : W;
+      const wh = portrait ? W : H;
+      const s = Math.min(cssW / ww, cssH / wh);
+      this.view = { s, dpr, portrait, ox: (cssW - ww * s) / 2, oy: (cssH - wh * s) / 2, cssW, cssH };
+    }
+
+    /** Screen-space (CSS px) delta → world delta, honouring portrait rotation. */
+    screenDeltaToWorld(dx, dy) {
+      const { s, portrait } = this.view;
+      return portrait ? { x: dy / s, y: -dx / s } : { x: dx / s, y: dy / s };
+    }
+
+    screenDirToWorld(dx, dy) { return this.view.portrait ? { x: dy, y: -dx } : { x: dx, y: dy }; }
+
+    setTheme(theme) { this.theme = theme; }
+
+    resetRun() {
+      this.particles.length = 0;
+      this.popups.length = 0;
+      this.trail.length = 0;
+      this.trauma = 0;
+      this.flash = 0;
+    }
+
+    shake(amount) { if (!this.reducedMotion) this.trauma = Math.min(1, this.trauma + amount); }
+    flashScreen(amount) { if (!this.reducedMotion) this.flash = Math.min(0.6, this.flash + amount); }
+
+    burst(x, y, color, count, speed, life = 0.5, size = 3) {
+      for (let i = 0; i < count && this.particles.length < 700; i++) {
+        const a = Math.random() * TAU;
+        const v = speed * (0.3 + Math.random() * 0.7);
+        this.particles.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life, max: life, color, size: size * (0.5 + Math.random()) });
+      }
+    }
+
+    directional(x, y, dx, dy, color, count, speed) {
+      const base = Math.atan2(-dy, -dx);
+      for (let i = 0; i < count && this.particles.length < 700; i++) {
+        const a = base + (Math.random() - 0.5) * 0.9;
+        const v = speed * (0.4 + Math.random() * 0.6);
+        this.particles.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.35, max: 0.35, color, size: 2.5 });
+      }
+    }
+
+    popup(x, y, text, color, size = 18) {
+      if (this.popups.length > 24) this.popups.shift();
+      this.popups.push({ x, y, text, color, size, life: 0.9, max: 0.9 });
+    }
+
+    ring(x, y, r, color) {
+      this.popups.push({ x, y, ring: r, color, life: 0.45, max: 0.45 });
+    }
+
+    applyWorldTransform(sx, sy) {
+      const { s, dpr, portrait, ox, oy } = this.view;
+      if (portrait) this.ctx.setTransform(0, s * dpr, -s * dpr, 0, (ox + H * s + sx) * dpr, (oy + sy) * dpr);
+      else this.ctx.setTransform(s * dpr, 0, 0, s * dpr, (ox + sx) * dpr, (oy + sy) * dpr);
+    }
+
+    /** Draws text upright on screen even when the world is rotated. */
+    text(str, x, y, size, color, alpha = 1) {
+      const c = this.ctx;
+      c.save();
+      c.translate(x, y);
+      if (this.view.portrait) c.rotate(-Math.PI / 2);
+      c.globalAlpha = alpha;
+      c.font = `800 ${size}px ui-monospace, Menlo, Consolas, monospace`;
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillStyle = color;
+      c.fillText(str, 0, 0);
+      c.restore();
+    }
+
+    render(engine, dt, attract) {
+      this.clock += dt;
+      const c = this.ctx;
+      this.updateFx(dt);
+
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      c.globalCompositeOperation = 'source-over';
+      c.globalAlpha = 1;
+      c.fillStyle = '#05060f';
+      c.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+      let sx = 0;
+      let sy = 0;
+      if (this.trauma > 0) {
+        const m = this.trauma * this.trauma * 14;
+        sx = (Math.random() * 2 - 1) * m;
+        sy = (Math.random() * 2 - 1) * m;
+      }
+      this.applyWorldTransform(sx, sy);
+      c.save();
+      c.beginPath();
+      c.rect(0, 0, W, H);
+      c.clip();
+      this.drawBackdrop(engine, attract);
+      if (engine) {
+        this.drawShards(engine);
+        this.drawHazards(engine);
+        this.drawPlayer(engine);
+      }
+      this.drawParticles();
+      this.drawPopups();
+      c.restore();
+
+      c.strokeStyle = engine && engine.overdrive ? 'rgba(255, 43, 214, 0.55)' : 'rgba(41, 243, 255, 0.35)';
+      c.lineWidth = 2;
+      c.strokeRect(0, 0, W, H);
+
+      if (this.flash > 0) {
+        c.setTransform(1, 0, 0, 1, 0, 0);
+        c.globalAlpha = this.flash;
+        c.fillStyle = '#ffffff';
+        c.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        c.globalAlpha = 1;
+      }
+    }
+
+    updateFx(dt) {
+      this.trauma = Math.max(0, this.trauma - dt * 1.6);
+      this.flash = Math.max(0, this.flash - dt * 2.5);
+      for (const p of this.particles) {
+        p.life -= dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vx *= 1 - 2.5 * dt;
+        p.vy *= 1 - 2.5 * dt;
+        p.dead = p.life <= 0;
+      }
+      compact(this.particles);
+      for (const p of this.popups) {
+        p.life -= dt;
+        if (!p.ring) p.y -= 40 * dt;
+        p.dead = p.life <= 0;
+      }
+      compact(this.popups);
+    }
+
+    drawBackdrop(engine, attract) {
+      const c = this.ctx;
+      const t = this.clock;
+      const beat = Math.max(0, Math.cos(t * Math.PI * 4)) ** 6;
+      c.fillStyle = '#070918';
+      c.fillRect(0, 0, W, H);
+      for (const s of this.stars) {
+        const x = (s.x - t * 18 * s.z + W * 4) % W;
+        c.fillStyle = `rgba(160, 190, 255, ${0.25 + s.z * 0.45})`;
+        c.fillRect(x, s.y, 2 * s.z, 2 * s.z);
+      }
+      const od = engine && engine.overdrive;
+      c.strokeStyle = od ? `rgba(255, 43, 214, ${0.08 + beat * 0.08})` : `rgba(80, 120, 255, ${0.07 + beat * 0.05})`;
+      c.lineWidth = 1;
+      c.beginPath();
+      const off = attract ? (t * 20) % 64 : 0;
+      for (let x = -off; x <= W; x += 64) { c.moveTo(x, 0); c.lineTo(x, H); }
+      for (let y = 0; y <= H; y += 64) { c.moveTo(0, y); c.lineTo(W, y); }
+      c.stroke();
+    }
+
+    drawShards(engine) {
+      const c = this.ctx;
+      for (const s of engine.shards) {
+        const left = CONFIG.shard.life - s.age;
+        if (left < 1.5 && Math.sin(this.clock * 30) > 0) continue;
+        const spin = this.clock * 3 + s.id;
+        const size = s.golden ? 13 : 9;
+        const color = s.golden ? COLORS.core : COLORS.shard;
+        c.save();
+        c.translate(s.x, s.y);
+        c.rotate(spin);
+        c.globalCompositeOperation = 'lighter';
+        c.globalAlpha = 0.25;
+        c.fillStyle = color;
+        c.beginPath();
+        c.arc(0, 0, size * 1.9, 0, TAU);
+        c.fill();
+        c.globalAlpha = 1;
+        c.strokeStyle = color;
+        c.lineWidth = 2.5;
+        c.beginPath();
+        if (s.golden) {
+          for (let i = 0; i < 6; i++) {
+            const a = (i / 6) * TAU;
+            c.lineTo(Math.cos(a) * size, Math.sin(a) * size);
+          }
+        } else {
+          c.moveTo(0, -size);
+          c.lineTo(size * 0.7, 0);
+          c.lineTo(0, size);
+          c.lineTo(-size * 0.7, 0);
+        }
+        c.closePath();
+        c.stroke();
+        c.restore();
+      }
+    }
+
+    drawHazards(engine) {
+      const c = this.ctx;
+      for (const h of engine.hazards) {
+        switch (h.kind) {
+          case 'debris':
+          case 'shrapnel': this.drawRock(h); break;
+          case 'drone': this.drawDrone(h); break;
+          case 'laser': this.drawLaser(engine, h); break;
+          case 'ring': this.drawRing(h); break;
+          case 'well': this.drawWell(h); break;
+          case 'burst': {
+            const k = h.age / h.warn;
+            c.strokeStyle = COLORS.shrapnel;
+            c.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(this.clock * 20));
+            c.lineWidth = 2;
+            c.beginPath();
+            c.arc(h.x, h.y, 50 * (1 - k) + 8, 0, TAU);
+            c.stroke();
+            c.beginPath();
+            c.moveTo(h.x - 14, h.y); c.lineTo(h.x + 14, h.y);
+            c.moveTo(h.x, h.y - 14); c.lineTo(h.x, h.y + 14);
+            c.stroke();
+            c.globalAlpha = 1;
+            break;
+          }
+          default: break;
+        }
+      }
+    }
+
+    drawRock(h) {
+      const c = this.ctx;
+      const color = h.kind === 'shrapnel' ? COLORS.shrapnel : COLORS.debris;
+      c.save();
+      c.translate(h.x, h.y);
+      c.rotate(h.rot);
+      c.beginPath();
+      if (h.verts) {
+        for (const [a, f] of h.verts) c.lineTo(Math.cos(a) * h.r * f, Math.sin(a) * h.r * f);
+      } else {
+        c.moveTo(h.r * 1.4, 0);
+        c.lineTo(-h.r, h.r * 0.8);
+        c.lineTo(-h.r, -h.r * 0.8);
+      }
+      c.closePath();
+      c.fillStyle = 'rgba(255, 60, 80, 0.12)';
+      c.fill();
+      c.globalCompositeOperation = 'lighter';
+      c.strokeStyle = color;
+      c.globalAlpha = 0.3;
+      c.lineWidth = 6;
+      c.stroke();
+      c.globalAlpha = 1;
+      c.lineWidth = 2;
+      c.stroke();
+      c.restore();
+    }
+
+    drawDrone(h) {
+      const c = this.ctx;
+      const blink = h.life - h.age < 1.2 && Math.sin(this.clock * 28) > 0;
+      c.save();
+      c.translate(h.x, h.y);
+      c.rotate(Math.atan2(h.vy, h.vx));
+      c.globalCompositeOperation = 'lighter';
+      c.strokeStyle = blink ? '#ffffff' : COLORS.drone;
+      c.lineWidth = 2.5;
+      c.beginPath();
+      c.moveTo(16, 0);
+      c.lineTo(-10, 11);
+      c.lineTo(-5, 0);
+      c.lineTo(-10, -11);
+      c.closePath();
+      c.stroke();
+      c.globalAlpha = 0.25;
+      c.lineWidth = 8;
+      c.stroke();
+      c.globalAlpha = 1;
+      c.fillStyle = '#fff3d6';
+      c.beginPath();
+      c.arc(3, 0, 2.5, 0, TAU);
+      c.fill();
+      c.restore();
+    }
+
+    laserLine(x, y, a) {
+      const c = this.ctx;
+      const L = 1700;
+      c.beginPath();
+      c.moveTo(x - Math.cos(a) * L, y - Math.sin(a) * L);
+      c.lineTo(x + Math.cos(a) * L, y + Math.sin(a) * L);
+    }
+
+    drawLaser(engine, h) {
+      const c = this.ctx;
+      if (h.age < h.warn) {
+        const k = h.age / h.warn;
+        c.setLineDash([18, 12]);
+        c.lineDashOffset = -this.clock * 80;
+        c.strokeStyle = COLORS.laser;
+        c.lineWidth = 2;
+        c.globalAlpha = 0.25 + 0.5 * Math.abs(Math.sin(this.clock * (8 + k * 14)));
+        this.laserLine(h.x, h.y, h.angle);
+        c.stroke();
+        c.globalAlpha = 0.15;
+        this.laserLine(h.x, h.y, h.angle + h.sweep);
+        c.stroke();
+        c.setLineDash([]);
+        c.globalAlpha = 1;
+        this.text('!', h.x, h.y, 22, COLORS.laser, 0.9);
+        return;
+      }
+      const a = engine.laserAngle(h);
+      const fade = Math.min(1, (h.warn + h.active - h.age) * 6);
+      c.globalCompositeOperation = 'lighter';
+      c.strokeStyle = COLORS.laser;
+      c.globalAlpha = 0.22 * fade;
+      c.lineWidth = h.width * 2.4;
+      this.laserLine(h.x, h.y, a);
+      c.stroke();
+      c.globalAlpha = 0.65 * fade;
+      c.lineWidth = h.width;
+      c.stroke();
+      c.strokeStyle = '#ffffff';
+      c.globalAlpha = fade;
+      c.lineWidth = 3;
+      c.stroke();
+      c.globalAlpha = 1;
+      c.globalCompositeOperation = 'source-over';
+    }
+
+    drawRing(h) {
+      const c = this.ctx;
+      if (h.age < h.warn) {
+        c.strokeStyle = COLORS.ring;
+        c.globalAlpha = 0.5 + 0.5 * Math.abs(Math.sin(this.clock * 16));
+        c.lineWidth = 3;
+        c.beginPath();
+        c.arc(h.x, h.y, 12 + 10 * (h.age / h.warn), 0, TAU);
+        c.stroke();
+        c.globalAlpha = 1;
+        return;
+      }
+      const a0 = h.gapAngle + h.gapSize / 2;
+      const a1 = h.gapAngle - h.gapSize / 2 + TAU;
+      c.globalCompositeOperation = 'lighter';
+      c.strokeStyle = COLORS.ring;
+      c.globalAlpha = 0.25;
+      c.lineWidth = h.thickness * 2.2;
+      c.beginPath();
+      c.arc(h.x, h.y, h.radius, a0, a1);
+      c.stroke();
+      c.globalAlpha = 1;
+      c.lineWidth = h.thickness * 0.6;
+      c.stroke();
+      c.globalCompositeOperation = 'source-over';
+    }
+
+    drawWell(h) {
+      const c = this.ctx;
+      const active = h.age >= h.warn;
+      const fade = active ? Math.min(1, (h.warn + h.life - h.age) * 2) : h.age / h.warn;
+      c.save();
+      c.translate(h.x, h.y);
+      c.globalCompositeOperation = 'lighter';
+      c.strokeStyle = COLORS.well;
+      for (let i = 0; i < 4; i++) {
+        const r = ((this.clock * 60 + i * (h.pullR / 4)) % h.pullR);
+        c.globalAlpha = 0.25 * fade * (1 - r / h.pullR);
+        c.lineWidth = 2;
+        c.beginPath();
+        c.arc(0, 0, h.pullR - r, 0, TAU);
+        c.stroke();
+      }
+      c.rotate(this.clock * 4);
+      c.globalAlpha = fade;
+      c.lineWidth = 3;
+      c.setLineDash([10, 8]);
+      c.beginPath();
+      c.arc(0, 0, h.coreR, 0, TAU);
+      c.stroke();
+      c.setLineDash([]);
+      c.globalCompositeOperation = 'source-over';
+      c.fillStyle = 'rgba(10, 0, 25, 0.85)';
+      c.beginPath();
+      c.arc(0, 0, h.coreR - 3, 0, TAU);
+      c.fill();
+      c.restore();
+      c.globalAlpha = 1;
+    }
+
+    drawPlayer(engine) {
+      const c = this.ctx;
+      const p = engine.player;
+      const theme = this.theme;
+      if (engine.state === 'running') {
+        this.trail.push({ x: p.x, y: p.y });
+        if (this.trail.length > 22) this.trail.shift();
+      }
+      if (this.trail.length > 1) {
+        c.globalCompositeOperation = 'lighter';
+        c.strokeStyle = theme.trail;
+        c.lineCap = 'round';
+        for (let i = 1; i < this.trail.length; i++) {
+          const k = i / this.trail.length;
+          c.globalAlpha = k * 0.5;
+          c.lineWidth = 1 + k * 7;
+          c.beginPath();
+          c.moveTo(this.trail[i - 1].x, this.trail[i - 1].y);
+          c.lineTo(this.trail[i].x, this.trail[i].y);
+          c.stroke();
+        }
+        c.globalAlpha = 1;
+        c.globalCompositeOperation = 'source-over';
+      }
+      if (engine.state === 'breach' || engine.state === 'over') return;
+      const flicker = p.invuln > 0 && Math.sin(this.clock * 40) > 0;
+      c.save();
+      c.translate(p.x, p.y);
+      if (p.shield > 0) {
+        c.strokeStyle = COLORS.core;
+        c.globalAlpha = 0.35 + 0.15 * Math.sin(this.clock * 6);
+        c.lineWidth = 2;
+        c.beginPath();
+        c.arc(0, 0, 22, 0, TAU);
+        c.stroke();
+        c.globalAlpha = 1;
+      }
+      c.rotate(Math.atan2(p.dirY, p.dirX));
+      c.globalAlpha = flicker ? 0.35 : 1;
+      c.beginPath();
+      c.moveTo(17, 0);
+      c.lineTo(-11, -10);
+      c.lineTo(-5, 0);
+      c.lineTo(-11, 10);
+      c.closePath();
+      c.fillStyle = 'rgba(5, 6, 15, 0.9)';
+      c.fill();
+      c.globalCompositeOperation = 'lighter';
+      c.strokeStyle = p.dashInv > 0 ? '#ffffff' : theme.primary;
+      c.lineWidth = 9;
+      c.globalAlpha *= 0.25;
+      c.stroke();
+      c.globalAlpha = flicker ? 0.35 : 1;
+      c.lineWidth = 2.5;
+      c.stroke();
+      c.fillStyle = theme.secondary;
+      c.beginPath();
+      c.arc(-7, 0, 2.2 + Math.random() * 1.5, 0, TAU);
+      c.fill();
+      c.restore();
+      c.globalAlpha = 1;
+      c.globalCompositeOperation = 'source-over';
+    }
+
+    drawParticles() {
+      const c = this.ctx;
+      c.globalCompositeOperation = 'lighter';
+      for (const p of this.particles) {
+        c.globalAlpha = Math.max(0, p.life / p.max);
+        c.fillStyle = p.color;
+        c.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+      }
+      c.globalAlpha = 1;
+      c.globalCompositeOperation = 'source-over';
+    }
+
+    drawPopups() {
+      const c = this.ctx;
+      for (const p of this.popups) {
+        const k = p.life / p.max;
+        if (p.ring) {
+          c.strokeStyle = p.color;
+          c.globalAlpha = k;
+          c.lineWidth = 4;
+          c.beginPath();
+          c.arc(p.x, p.y, p.ring * (1 - k * 0.7), 0, TAU);
+          c.stroke();
+          c.globalAlpha = 1;
+        } else {
+          this.text(p.text, p.x, p.y, p.size, p.color, Math.min(1, k * 1.6));
+        }
+      }
+    }
+  }
+
+  /* ======================================================================
+   * 6. INPUT — keyboard + relative drag (finger never covers the ship) +
+   * double-tap / on-screen button for Phase Dash.
+   * ==================================================================== */
+  const KEY_DIRS = Object.freeze({
+    ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1],
+    ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0],
+  });
+
+  class Input {
+    constructor({ surface, dashButton, renderer, isPlaying, onDashTap, onPauseKey, onMuteKey, onGesture }) {
+      this.renderer = renderer;
+      this.isPlaying = isPlaying;
+      this.keys = new Set();
+      this.dragging = false;
+      this.pointerId = null;
+      this.lastX = 0;
+      this.lastY = 0;
+      this.accDX = 0;
+      this.accDY = 0;
+      this.dashQueued = false;
+      this.lastTap = { t: -1e9, x: 0, y: 0 };
+
+      globalThis.addEventListener('keydown', (e) => {
+        onGesture();
+        if (Object.hasOwn(KEY_DIRS, e.code) || e.code === 'Space' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+          if (this.isPlaying()) e.preventDefault();
+        }
+        if (e.repeat) return;
+        if (e.code === 'Escape' || e.code === 'KeyP') { onPauseKey(); return; }
+        if (e.code === 'KeyM') { onMuteKey(); return; }
+        if ((e.code === 'Space' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') && this.isPlaying()) this.dashQueued = true;
+        if (Object.hasOwn(KEY_DIRS, e.code)) this.keys.add(e.code);
+      });
+      globalThis.addEventListener('keyup', (e) => { this.keys.delete(e.code); });
+      globalThis.addEventListener('blur', () => { this.keys.clear(); this.endDrag(); });
+
+      surface.addEventListener('pointerdown', (e) => {
+        onGesture();
+        if (!this.isPlaying()) return;
+        e.preventDefault();
+        const now = performance.now();
+        if (now - this.lastTap.t < 300 && Math.hypot(e.clientX - this.lastTap.x, e.clientY - this.lastTap.y) < 60) {
+          this.dashQueued = true;
+          onDashTap();
+          this.lastTap.t = -1e9;
+        } else {
+          this.lastTap = { t: now, x: e.clientX, y: e.clientY };
+        }
+        this.dragging = true;
+        this.pointerId = e.pointerId;
+        this.lastX = e.clientX;
+        this.lastY = e.clientY;
+        try { surface.setPointerCapture(e.pointerId); } catch { /* capture is best-effort */ }
+      });
+      surface.addEventListener('pointermove', (e) => {
+        if (!this.dragging || e.pointerId !== this.pointerId) return;
+        this.accDX += e.clientX - this.lastX;
+        this.accDY += e.clientY - this.lastY;
+        this.lastX = e.clientX;
+        this.lastY = e.clientY;
+      });
+      const up = (e) => { if (e.pointerId === this.pointerId) this.endDrag(); };
+      surface.addEventListener('pointerup', up);
+      surface.addEventListener('pointercancel', up);
+      surface.addEventListener('contextmenu', (e) => e.preventDefault());
+
+      dashButton.addEventListener('pointerdown', (e) => {
+        onGesture();
+        e.preventDefault();
+        e.stopPropagation();
+        if (this.isPlaying()) { this.dashQueued = true; onDashTap(); }
+      });
+    }
+
+    endDrag() {
+      this.dragging = false;
+      this.pointerId = null;
+    }
+
+    reset() {
+      this.accDX = 0;
+      this.accDY = 0;
+      this.dashQueued = false;
+      this.endDrag();
+    }
+
+    /** Snapshot for one frame; clears per-frame accumulators. */
+    frame() {
+      let sx = 0;
+      let sy = 0;
+      for (const code of this.keys) {
+        sx += KEY_DIRS[code][0];
+        sy += KEY_DIRS[code][1];
+      }
+      sx = Math.max(-1, Math.min(1, sx));
+      sy = Math.max(-1, Math.min(1, sy));
+      const move = this.renderer.screenDirToWorld(sx, sy);
+      const drag = this.renderer.screenDeltaToWorld(this.accDX, this.accDY);
+      const out = { moveX: move.x, moveY: move.y, dragging: this.dragging, dragDX: drag.x, dragDY: drag.y, dash: this.dashQueued };
+      this.accDX = 0;
+      this.accDY = 0;
+      this.dashQueued = false;
+      return out;
+    }
+  }
+
+  /* ======================================================================
+   * 7. UI MANAGER — DOM screens and HUD. Untrusted strings only ever go
+   * through textContent (HTML-string sinks are banned by scripts/check.mjs).
+   * ==================================================================== */
+  const SCREENS = Object.freeze(['title', 'hangar', 'revive', 'over', 'pause']);
+
+  function h(tag, props = {}, children = []) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (k === 'text') el.textContent = v;
+      else if (k === 'class') el.className = v;
+      else if (k === 'on') { for (const [evt, fn] of Object.entries(v)) el.addEventListener(evt, fn); }
+      else if (k === 'disabled') el.disabled = Boolean(v);
+      else el.setAttribute(k, String(v));
+    }
+    for (const child of children) if (child) el.append(child);
+    return el;
+  }
+
+  class UIManager {
+    constructor(doc) {
+      const $ = (id) => {
+        const el = doc.getElementById(id);
+        if (!el) throw new Error(`Missing #${id}`);
+        return el;
+      };
+      this.doc = doc;
+      this.el = {
+        canvas: $('game'), stage: $('stage'), hud: $('hud'), hudTime: $('hud-time'), hudScore: $('hud-score'),
+        hudMult: $('hud-mult'), hudChain: $('hud-chain'), hudDash: $('hud-dash'), hudShield: $('hud-shield'),
+        announce: $('announce'), banner: $('challenge-banner'), dashBtn: $('dash-btn'),
+        btnAdMode: $('btn-ad-mode'), btnPause: $('btn-pause'), btnMute: $('btn-mute'),
+        titleKicker: $('title-kicker'), titleTagline: $('title-tagline'), titleStats: $('title-stats'), titleScrap: $('title-scrap'),
+        btnPlay: $('btn-play'), btnHangar: $('btn-hangar'),
+        hangarScrap: $('hangar-scrap'), upgradeList: $('upgrade-list'), themeList: $('theme-list'), btnTopup: $('btn-topup'), btnHangarBack: $('btn-hangar-back'),
+        reviveTime: $('revive-time'), reviveCount: $('revive-count'), btnRevive: $('btn-revive'), btnReviveSkip: $('btn-revive-skip'),
+        overSeed: $('over-seed'), overHeading: $('over-heading'), overTimeline: $('over-timeline'), overStats: $('over-stats'), overNote: $('over-note'),
+        btnShare: $('btn-share'), btnDouble: $('btn-double'), btnAgain: $('btn-again'), btnOverHangar: $('btn-over-hangar'), btnOverMenu: $('btn-over-menu'),
+        btnResume: $('btn-resume'), btnEnd: $('btn-end'),
+        adModal: $('ad-modal'), adKicker: $('ad-modal-kicker'), adCount: $('ad-count'), adProgress: $('ad-progress'), adReward: $('ad-reward-label'), btnAdClose: $('btn-ad-close'),
+        toast: $('toast'), bannerSlot: $('banner-ad-slot'),
+      };
+      this.screens = Object.fromEntries(SCREENS.map((s) => [s, $(`scr-${s}`)]));
+      this.modeButtons = [...doc.querySelectorAll('[data-mode]')];
+      this.hudCache = {};
+      this.toastTimer = 0;
+      this.announceTimer = 0;
+      this.adCloseHandler = null;
+      this.el.btnAdClose.addEventListener('click', () => { if (this.adCloseHandler) this.adCloseHandler(); });
+      this.touch = globalThis.matchMedia('(pointer: coarse)').matches;
+    }
+
+    showScreen(name) {
+      for (const s of SCREENS) this.screens[s].hidden = s !== name;
+      if (name) {
+        const first = this.screens[name].querySelector('button:not([hidden]):not(:disabled)');
+        if (first && !this.touch) first.focus({ preventScroll: true });
+      }
+    }
+
+    setPlaying(playing) {
+      this.el.hud.hidden = !playing;
+      this.el.dashBtn.hidden = !(playing && this.touch);
+      if (playing && this.doc.activeElement instanceof HTMLElement) this.doc.activeElement.blur();
+    }
+
+    setMuted(muted) {
+      this.el.btnMute.setAttribute('aria-pressed', String(muted));
+      this.el.btnMute.setAttribute('aria-label', muted ? 'Unmute sound' : 'Mute sound');
+      this.el.btnMute.textContent = muted ? '🔇' : '🔊';
+    }
+
+    setAdModeLabel(label) { this.el.btnAdMode.textContent = `Ad Mode: ${label}`; }
+
+    setBannerPlaceholder(text) { this.el.bannerSlot.textContent = text; }
+
+    setChallengeBanner(text) {
+      this.el.banner.hidden = !text;
+      this.el.banner.textContent = text || '';
+    }
+
+    toast(message) {
+      const t = this.el.toast;
+      t.textContent = message;
+      t.classList.add('show');
+      clearTimeout(this.toastTimer);
+      this.toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+    }
+
+    announce(text) {
+      const a = this.el.announce;
+      a.textContent = text;
+      a.classList.add('show');
+      clearTimeout(this.announceTimer);
+      this.announceTimer = setTimeout(() => a.classList.remove('show'), 1600);
+    }
+
+    setStats(dl, entries) {
+      dl.replaceChildren(...entries.map(([k, v]) => h('div', {}, [h('dt', { text: k }), h('dd', { text: v })])));
+    }
+
+    renderTitle({ mode, seed, tagline, stats, scrap, challengeAvailable }) {
+      this.el.titleKicker.textContent = `${mode === 'daily' ? 'Daily Challenge' : mode === 'challenge' ? 'Friend Challenge' : 'Practice'} · ${seed}`;
+      this.el.titleTagline.textContent = tagline;
+      for (const b of this.modeButtons) {
+        b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
+        if (b.dataset.mode === 'challenge') b.hidden = !challengeAvailable;
+      }
+      this.setStats(this.el.titleStats, stats);
+      this.el.titleScrap.textContent = fmtInt(scrap);
+    }
+
+    updateHud(engine, loadout) {
+      const p = engine.player;
+      const vals = {
+        time: engine.time.toFixed(1),
+        score: fmtInt(engine.score),
+        mult: `x${engine.mult}`,
+        chain: engine.chain > 0 ? (engine.chainTimer / CONFIG.combo.window).toFixed(2) : '0',
+        dash: (1 - p.dashCd / loadout.dashCooldown).toFixed(2),
+        shield: '◆'.repeat(p.shield),
+      };
+      const c = this.hudCache;
+      if (c.time !== vals.time) this.el.hudTime.textContent = vals.time;
+      if (c.score !== vals.score) this.el.hudScore.textContent = vals.score;
+      if (c.mult !== vals.mult) this.el.hudMult.textContent = vals.mult;
+      if (c.chain !== vals.chain) this.el.hudChain.style.transform = `scaleX(${vals.chain})`;
+      if (c.dash !== vals.dash) this.el.hudDash.style.transform = `scaleX(${vals.dash})`;
+      if (c.shield !== vals.shield) this.el.hudShield.textContent = vals.shield;
+      this.hudCache = vals;
+    }
+
+    renderHangar(profile, { onBuy, onTheme }) {
+      this.el.hangarScrap.textContent = fmtInt(profile.scrap);
+      this.el.upgradeList.replaceChildren(...UPGRADE_KEYS.map((key) => {
+        const u = UPGRADES[key];
+        const tier = profile.upgrades[key];
+        const cost = upgradeCost(profile, key);
+        const now = u.fmt(u.values[tier]);
+        const next = cost === null ? null : u.fmt(u.values[tier + 1]);
+        return h('li', { class: 'card' }, [
+          h('div', {}, [h('strong', { text: `${u.name} ` }), h('span', { class: 'pips', text: '●'.repeat(tier) + '○'.repeat(3 - tier), 'aria-label': `Tier ${tier} of 3` })]),
+          h('button', {
+            class: 'btn small', type: 'button', disabled: cost === null || profile.scrap < cost,
+            text: cost === null ? 'MAXED' : `Upgrade · ${cost}`, 'aria-label': cost === null ? `${u.name} maxed` : `Upgrade ${u.name} for ${cost} scrap`,
+            on: { click: () => onBuy(key) },
+          }),
+          h('p', { text: `${u.blurb} Now: ${now}${next ? ` → ${next}` : ''}` }),
+        ]);
+      }));
+      this.el.themeList.replaceChildren(...THEMES.map((t) => {
+        const owned = profile.themes.includes(t.id);
+        const equipped = profile.theme === t.id;
+        const swatch = h('span', { class: 'swatch', 'aria-hidden': 'true' });
+        swatch.style.setProperty('--swatch', t.primary);
+        return h('li', { class: 'card' }, [
+          h('div', {}, [swatch, h('strong', { text: t.name })]),
+          h('button', {
+            class: 'btn small', type: 'button', disabled: equipped || (!owned && profile.scrap < t.cost),
+            text: equipped ? 'Equipped' : owned ? 'Equip' : `Unlock · ${t.cost}`,
+            on: { click: () => onTheme(t.id) },
+          }),
+        ]);
+      }));
+    }
+
+    renderRevive(time, count) {
+      this.el.reviveTime.textContent = `${time.toFixed(1)}s`;
+      this.el.reviveCount.textContent = String(count);
+    }
+
+    renderGameOver({ seed, heading, timeline, stats, note, doubleLabel, doubleEnabled }) {
+      this.el.overSeed.textContent = `Seed · ${seed}`;
+      this.el.overHeading.textContent = heading;
+      this.el.overTimeline.textContent = timeline;
+      this.el.overTimeline.setAttribute('aria-label', `Run timeline ${timeline}`);
+      this.setStats(this.el.overStats, stats);
+      this.el.overNote.textContent = note;
+      this.setDouble(doubleLabel, doubleEnabled);
+    }
+
+    setDouble(label, enabled) {
+      this.el.btnDouble.textContent = label;
+      this.el.btnDouble.disabled = !enabled;
+    }
+
+    openAdModal({ label, kicker, onClose }) {
+      this.adCloseHandler = onClose;
+      this.el.adKicker.textContent = kicker;
+      this.el.adReward.textContent = label;
+      this.el.adModal.hidden = false;
+      this.el.btnAdClose.focus({ preventScroll: true });
+    }
+
+    setAdCountdown(seconds, progress) {
+      this.el.adCount.textContent = String(seconds);
+      this.el.adProgress.style.transform = `scaleX(${progress.toFixed(3)})`;
+    }
+
+    closeAdModal() {
+      this.adCloseHandler = null;
+      this.el.adModal.hidden = true;
+    }
+  }
+
+  async function copyText(text) {
+    try {
+      if (navigator.clipboard && globalThis.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch { /* fall through to the legacy path */ }
+    try {
+      const ta = document.createElement('textarea');
+      ta.className = 'copy-buffer';
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      document.body.append(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      ta.remove();
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+
+  function safeLocalStorage() {
+    try {
+      const s = globalThis.localStorage;
+      const probe = `${STORAGE_PREFIX}probe`;
+      s.setItem(probe, '1');
+      s.removeItem(probe);
+      return s;
+    } catch {
+      return null;
+    }
+  }
+
+  /* ======================================================================
+   * 8. APP — run lifecycle, persistence, and wiring.
+   * ==================================================================== */
+  class App {
+    constructor() {
+      this.store = new Store(safeLocalStorage());
+      this.settings = sanitizeSettings(this.store.read('settings'));
+      this.profile = sanitizeProfile(this.store.read('profile'));
+      this.daily = sanitizeDaily(this.store.read('daily'));
+      this.launch = parseLaunchParams(globalThis.location.search);
+      this.mode = this.launch.seed ? 'challenge' : 'daily';
+      this.practiceSeed = randomSeed(secureRandomInt);
+      this.state = 'title';
+      this.engine = null;
+      this.run = null;
+      this.timers = new Set();
+      this.lastNow = 0;
+
+      this.ui = new UIManager(document);
+      this.renderer = new Renderer(this.ui.el.canvas, { reducedMotion: globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches });
+      this.renderer.setTheme(themeById(this.profile.theme));
+      this.audio = new AudioSynth();
+      this.audio.setMuted(this.settings.muted);
+      this.ads = new AdManager({
+        mode: this.settings.adMode,
+        ui: this.ui,
+        audio: this.audio,
+        onModeChange: (mode) => {
+          this.settings = { ...this.settings, adMode: mode };
+          this.saveSettings();
+          this.ui.setAdModeLabel(this.ads.providerLabel());
+        },
+      });
+      this.input = new Input({
+        surface: this.ui.el.canvas,
+        dashButton: this.ui.el.dashBtn,
+        renderer: this.renderer,
+        isPlaying: () => this.state === 'playing',
+        onDashTap: () => {},
+        onPauseKey: () => this.togglePause(),
+        onMuteKey: () => this.toggleMute(),
+        onGesture: () => this.audio.unlock(),
+      });
+
+      this.applyTheme();
+      this.ui.setMuted(this.settings.muted);
+      this.ui.setAdModeLabel(this.ads.providerLabel());
+      this.ads.renderBanner();
+      this.wire();
+      this.observeResize();
+      this.showTitle();
+      this.loop = this.loop.bind(this);
+      requestAnimationFrame(this.loop);
+    }
+
+    later(fn, ms) {
+      const id = setTimeout(() => { this.timers.delete(id); fn(); }, ms);
+      this.timers.add(id);
+      return id;
+    }
+
+    clearTimers() {
+      for (const id of this.timers) { clearTimeout(id); clearInterval(id); }
+      this.timers.clear();
+    }
+
+    saveProfile() { this.store.write('profile', this.profile); }
+    saveDaily() { this.store.write('daily', this.daily); }
+    saveSettings() { this.store.write('settings', this.settings); }
+
+    today() { return utcDateString(new Date()); }
+
+    currentSeed() {
+      if (this.mode === 'challenge' && this.launch.seed) return this.launch.seed;
+      if (this.mode === 'practice') return this.practiceSeed;
+      return dailySeedFor(new Date());
+    }
+
+    applyTheme() {
+      const theme = themeById(this.profile.theme);
+      this.renderer.setTheme(theme);
+      document.documentElement.style.setProperty('--accent', theme.primary);
+      document.documentElement.style.setProperty('--accent-2', theme.secondary);
+    }
+
+    wire() {
+      const ui = this.ui.el;
+      const click = (el, fn) => el.addEventListener('click', () => { this.audio.unlock(); this.audio.play('ui'); fn(); });
+      click(ui.btnPlay, () => this.startRun());
+      click(ui.btnHangar, () => this.showHangar('title'));
+      click(ui.btnHangarBack, () => (this.hangarReturn === 'over' ? this.showOver() : this.showTitle()));
+      click(ui.btnTopup, () => this.topUp());
+      click(ui.btnRevive, () => this.acceptRevive());
+      click(ui.btnReviveSkip, () => this.finishRun());
+      click(ui.btnShare, () => this.share());
+      click(ui.btnDouble, () => this.doubleScrap());
+      click(ui.btnAgain, () => this.startRun());
+      click(ui.btnOverHangar, () => this.showHangar('over'));
+      click(ui.btnOverMenu, () => this.showTitle());
+      click(ui.btnResume, () => this.resume());
+      click(ui.btnEnd, () => this.endFromPause());
+      click(ui.btnPause, () => this.togglePause());
+      click(ui.btnMute, () => this.toggleMute());
+      click(ui.btnAdMode, () => this.ads.toggleMode());
+      for (const b of this.ui.modeButtons) {
+        click(b, () => {
+          const mode = b.dataset.mode;
+          if (mode === 'practice') this.practiceSeed = randomSeed(secureRandomInt);
+          if (mode === 'challenge' && !this.launch.seed) return;
+          this.mode = mode;
+          this.showTitle();
+        });
+      }
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && this.state === 'playing') this.pause();
+      });
+    }
+
+    observeResize() {
+      const stage = this.ui.el.stage;
+      const apply = () => this.renderer.resize(stage.clientWidth, stage.clientHeight);
+      apply();
+      if (typeof ResizeObserver === 'function') new ResizeObserver(apply).observe(stage);
+      else globalThis.addEventListener('resize', apply);
+      globalThis.matchMedia('(max-width: 760px), (max-height: 520px)').addEventListener('change', () => this.ads.renderBanner());
+    }
+
+    challengeBannerText() {
+      if (this.mode !== 'challenge') return '';
+      return `CHALLENGE MODE: Beat your friend's run!${this.launch.beat ? ` Target ${fmtInt(this.launch.beat)}` : ''}`;
+    }
+
+    showTitle() {
+      this.clearTimers();
+      this.state = 'title';
+      this.engine = null;
+      this.ui.setPlaying(false);
+      this.ui.setChallengeBanner(this.challengeBannerText());
+      const today = this.today();
+      const seed = this.currentSeed();
+      let tagline;
+      let stats;
+      if (this.mode === 'daily') {
+        const fresh = this.daily.date === today;
+        tagline = 'Survive 60 seconds. Same run for everyone today.';
+        stats = [
+          ['Daily best', fmtInt(fresh ? this.daily.best : 0)],
+          ['Streak', `${currentStreak(this.daily, today)}d`],
+          ['Attempt #', String((fresh ? this.daily.attempts : 0) + 1)],
+        ];
+      } else if (this.mode === 'challenge') {
+        tagline = 'Your friend sent this exact run. Same hazards, same shards.';
+        stats = [['Target', this.launch.beat ? fmtInt(this.launch.beat) : '—'], ['Seed', seed], ['Runs', fmtInt(this.profile.runs)]];
+      } else {
+        tagline = 'Random seed every run. Warm up, test upgrades, chase Overdrive.';
+        stats = [['Best', fmtInt(this.profile.bestPractice)], ['Runs', fmtInt(this.profile.runs)], ['Scrap', fmtInt(this.profile.scrap)]];
+      }
+      this.ui.renderTitle({ mode: this.mode, seed, tagline, stats, scrap: this.profile.scrap, challengeAvailable: Boolean(this.launch.seed) });
+      this.ui.showScreen('title');
+    }
+
+    showHangar(returnTo) {
+      this.hangarReturn = returnTo;
+      this.state = 'hangar';
+      this.ui.setChallengeBanner('');
+      this.renderHangar();
+      this.ui.showScreen('hangar');
+    }
+
+    renderHangar() {
+      this.ui.renderHangar(this.profile, {
+        onBuy: (key) => {
+          const r = buyUpgrade(this.profile, key);
+          if (r.ok) { this.profile = r.profile; this.saveProfile(); this.audio.play('reward'); this.ui.toast(`${UPGRADES[key].name} upgraded`); }
+          this.renderHangar();
+        },
+        onTheme: (id) => {
+          const r = selectTheme(this.profile, id);
+          if (r.ok) { this.profile = r.profile; this.saveProfile(); this.applyTheme(); this.audio.play('ui'); }
+          this.renderHangar();
+        },
+      });
+      this.ui.el.btnTopup.disabled = !this.ads.isRewardedAvailable();
+    }
+
+    async topUp() {
+      const r = await this.ads.showRewarded('scrap_topup');
+      if (r.granted) {
+        this.profile = addScrap(this.profile, CONFIG.ads.topUpScrap);
+        this.saveProfile();
+        this.audio.play('reward');
+        this.ui.toast(`+${CONFIG.ads.topUpScrap} scrap`);
+      }
+      if (this.state === 'hangar') this.renderHangar();
+    }
+
+    startRun() {
+      this.clearTimers();
+      this.audio.unlock();
+      const seed = this.currentSeed();
+      const today = this.today();
+      if (this.mode === 'daily') {
+        this.daily = registerDailyAttempt(this.daily, today);
+        this.saveDaily();
+      }
+      const loadout = loadoutFrom(this.profile);
+      this.run = { seed, mode: this.mode, today, loadout, results: null, scrap: 0, doubled: false, newBest: false };
+      this.engine = new GameEngine({ seed, loadout, onEvent: (type, data) => this.onEngineEvent(type, data) });
+      this.renderer.resetRun();
+      this.input.reset();
+      this.ui.setChallengeBanner('');
+      this.ui.showScreen(null);
+      this.ui.setPlaying(true);
+      this.state = 'playing';
+      this.lastNow = 0;
+      this.ads.gameplayStart();
+      this.audio.startMusic();
+    }
+
+    onEngineEvent(type, d) {
+      const R = this.renderer;
+      const A = this.audio;
+      const theme = this.renderer.theme;
+      switch (type) {
+        case 'shard': R.burst(d.x, d.y, COLORS.shard, 10, 170, 0.4); R.popup(d.x, d.y - 14, d.text, COLORS.shard); A.play('shard', d); break;
+        case 'core': R.burst(d.x, d.y, COLORS.core, 26, 260, 0.6); R.popup(d.x, d.y - 16, d.text, COLORS.core, 22); A.play('core'); break;
+        case 'graze': R.burst(d.x, d.y, '#ffffff', 6, 140, 0.25, 2); R.popup(d.x, d.y - 22, d.text, '#ffffff', 15); A.play('graze'); break;
+        case 'phase': R.burst(d.x, d.y, theme.primary, 14, 220, 0.35); R.popup(d.x, d.y - 24, d.text, theme.primary, 16); A.play('phase'); break;
+        case 'bait': R.burst(d.x, d.y, COLORS.drone, 40, 320, 0.7); R.popup(d.x, d.y - 18, d.text, COLORS.drone, 20); R.shake(0.25); A.play('boom'); break;
+        case 'dash': R.directional(d.x, d.y, d.dx, d.dy, theme.trail, 18, 360); A.play('dash'); break;
+        case 'shield': R.burst(d.x, d.y, COLORS.core, 30, 300, 0.6); R.shake(0.5); R.flashScreen(0.25); A.play('shield'); this.ui.announce(d.left > 0 ? 'AEGIS HOLDING' : 'AEGIS DOWN'); break;
+        case 'shockwave': R.ring(d.x, d.y, d.r, COLORS.core); break;
+        case 'breach': R.burst(d.x, d.y, theme.primary, 70, 420, 1.1, 4); R.burst(d.x, d.y, COLORS.debris, 40, 300, 0.9); R.shake(1); R.flashScreen(0.5); A.play('breach'); this.onBreach(); break;
+        case 'revive': R.ring(d.x, d.y, 120, theme.primary); R.burst(d.x, d.y, theme.primary, 30, 260, 0.6); A.play('revive'); break;
+        case 'burst': R.burst(d.x, d.y, COLORS.shrapnel, 14, 200, 0.35); A.play('boom'); break;
+        case 'fizzle': R.burst(d.x, d.y, COLORS.drone, 10, 120, 0.3); break;
+        case 'laserFire': R.shake(0.12); A.play('laser'); break;
+        case 'spawn':
+          if (d.kind === 'laser' || d.kind === 'ring' || d.kind === 'burst') A.play('warn');
+          else if (d.kind === 'drone') A.play('drone');
+          break;
+        case 'segment':
+          if (d.index > 0 && d.index < SEGMENTS) { this.ui.announce(SEGMENT_NAMES[d.index]); A.play('segment'); }
+          if (d.index === 0) this.ui.announce(SEGMENT_NAMES[0]);
+          break;
+        case 'overdrive': this.ui.announce('60s SURVIVED · OVERDRIVE'); A.play('reward'); break;
+        default: break;
+      }
+    }
+
+    onBreach() {
+      this.state = 'breach';
+      this.ads.gameplayStop();
+      this.audio.stopMusic();
+      this.later(() => {
+        if (this.state !== 'breach') return;
+        if (!this.engine.revived && this.ads.isRewardedAvailable()) this.offerRevive();
+        else this.finishRun();
+      }, 900);
+    }
+
+    offerRevive() {
+      this.state = 'revive';
+      let count = CONFIG.revive.offerSeconds;
+      this.ui.renderRevive(this.engine.time, count);
+      this.ui.setPlaying(false);
+      this.ui.showScreen('revive');
+      const id = setInterval(() => {
+        if (this.ads.busy) return; // the countdown pauses while the ad plays
+        count -= 1;
+        this.ui.renderRevive(this.engine.time, Math.max(0, count));
+        if (count <= 0) { clearInterval(id); this.timers.delete(id); this.finishRun(); }
+      }, 1000);
+      this.timers.add(id);
+    }
+
+    async acceptRevive() {
+      if (this.state !== 'revive') return;
+      const r = await this.ads.showRewarded('revive');
+      if (this.state !== 'revive') return;
+      this.clearTimers();
+      if (r.granted && this.engine.revive()) {
+        this.ui.showScreen(null);
+        this.ui.setPlaying(true);
+        this.input.reset();
+        this.state = 'playing';
+        this.lastNow = 0;
+        this.ads.gameplayStart();
+        this.audio.startMusic();
+        this.ui.announce('SECOND CHANCE');
+      } else {
+        this.finishRun();
+      }
+    }
+
+    finishRun() {
+      if (!this.engine || !this.run || this.run.results) return;
+      this.clearTimers();
+      this.engine.end();
+      this.ads.gameplayStop();
+      this.audio.stopMusic();
+      const res = this.engine.results();
+      const scrap = scrapForRun(res.score, res.survival);
+      this.run.results = res;
+      this.run.scrap = scrap;
+      this.profile = addScrap({ ...this.profile, runs: this.profile.runs + 1 }, scrap);
+      if (this.run.mode === 'practice' && res.score > this.profile.bestPractice) {
+        this.profile = { ...this.profile, bestPractice: res.score };
+        this.run.newBest = true;
+      }
+      if (this.run.mode === 'daily') {
+        const before = this.daily.date === this.run.today ? this.daily.best : 0;
+        this.daily = recordDailyResult(this.daily, this.run.today, res.score, res.survival);
+        this.run.newBest = res.score > before;
+        this.saveDaily();
+      }
+      this.saveProfile();
+      this.showOver();
+    }
+
+    showOver() {
+      const r = this.run;
+      const res = r.results;
+      this.state = 'over';
+      this.ui.setPlaying(false);
+      this.ui.setChallengeBanner(this.challengeBannerText());
+      let note = `+${fmtInt(r.scrap)} scrap${r.doubled ? ' (doubled)' : ''} · bank ${fmtInt(this.profile.scrap)}`;
+      if (r.mode === 'challenge' && this.launch.beat) {
+        note = res.score > this.launch.beat ? `You beat your friend by ${fmtInt(res.score - this.launch.beat)}! · ${note}` : `${fmtInt(this.launch.beat - res.score)} short of your friend · ${note}`;
+      } else if (r.newBest) {
+        note = `New ${r.mode === 'daily' ? 'daily' : 'practice'} best! · ${note}`;
+      }
+      this.ui.renderGameOver({
+        seed: r.seed,
+        heading: res.overdrive ? 'OVERDRIVE BREACH' : 'HULL BREACH',
+        timeline: res.timeline,
+        stats: [
+          ['Survival', `${res.survival.toFixed(1)}s`],
+          ['Score', fmtInt(res.score)],
+          ['Max combo', `x${res.maxMult}`],
+        ],
+        note,
+        doubleLabel: r.doubled ? 'Scrap doubled ✓' : `▶ Watch ad: 2x scrap (+${fmtInt(r.scrap)})`,
+        doubleEnabled: !r.doubled && r.scrap > 0,
+      });
+      this.ui.showScreen('over');
+    }
+
+    async doubleScrap() {
+      const r = this.run;
+      if (!r || !r.results || r.doubled) return;
+      const ad = await this.ads.showRewarded('double_scrap');
+      if (ad.granted && !r.doubled) {
+        r.doubled = true;
+        this.profile = addScrap(this.profile, r.scrap);
+        this.saveProfile();
+        this.audio.play('reward');
+        this.ui.toast(`+${fmtInt(r.scrap)} bonus scrap`);
+      }
+      if (this.state === 'over') this.showOver();
+    }
+
+    baseUrl() {
+      const loc = globalThis.location;
+      return loc.protocol === 'https:' || loc.protocol === 'http:' ? `${loc.origin}${loc.pathname}` : CONFIG.canonicalUrl;
+    }
+
+    shareText() {
+      const r = this.run;
+      const res = r.results;
+      return buildShareText({
+        seed: r.seed,
+        timeline: res.timeline,
+        survival: res.survival,
+        score: res.score,
+        maxMult: res.maxMult,
+        url: challengeUrl(this.baseUrl(), r.seed, res.score),
+        revived: res.revived,
+        tiers: res.tiers,
+      });
+    }
+
+    async share() {
+      if (!this.run || !this.run.results) return;
+      const text = this.shareText();
+      const copied = await copyText(text);
+      if (this.ui.touch && typeof navigator.share === 'function') {
+        try {
+          await navigator.share({ text });
+          return;
+        } catch { /* user cancelled or share unavailable — clipboard copy already happened */ }
+      }
+      this.ui.toast(copied ? 'Copied!' : 'Copy failed: long-press to select');
+    }
+
+    pause() {
+      if (this.state !== 'playing') return;
+      this.state = 'paused';
+      this.ads.gameplayStop();
+      this.audio.stopMusic();
+      this.ui.showScreen('pause');
+    }
+
+    resume() {
+      if (this.state !== 'paused') return;
+      this.ui.showScreen(null);
+      this.ui.setPlaying(true);
+      this.input.reset();
+      this.state = 'playing';
+      this.lastNow = 0;
+      this.ads.gameplayStart();
+      this.audio.startMusic();
+    }
+
+    togglePause() {
+      if (this.state === 'playing') this.pause();
+      else if (this.state === 'paused') this.resume();
+    }
+
+    endFromPause() {
+      if (this.state !== 'paused') return;
+      this.finishRun();
+    }
+
+    toggleMute() {
+      this.settings = { ...this.settings, muted: !this.settings.muted };
+      this.audio.setMuted(this.settings.muted);
+      this.ui.setMuted(this.settings.muted);
+      this.saveSettings();
+    }
+
+    loop(now) {
+      const dt = this.lastNow ? Math.min((now - this.lastNow) / 1000, MAX_FRAME_DT) : 0;
+      this.lastNow = now;
+      const input = this.input.frame();
+      if (this.state === 'playing' && this.engine) {
+        this.engine.update(dt, input);
+        const intensity = Math.min(1, this.engine.time / RUN_SECONDS);
+        this.audio.updateMusic(intensity);
+        this.ui.updateHud(this.engine, this.run.loadout);
+      }
+      const attract = this.state === 'title' || this.state === 'hangar';
+      this.renderer.render(attract ? null : this.engine, dt, attract);
+      requestAnimationFrame(this.loop);
+    }
+  }
+
+  /* ======================================================================
+   * Public, side-effect-free API (used by unit tests and debugging).
+   * ==================================================================== */
+  const api = {
+    VERSION, CONFIG, W, H, STEP, RUN_SECONDS, SEGMENTS, STORAGE_PREFIX,
+    mulberry32, hashString, Rng, rngFor,
+    utcDateString, dailySeedFor, shiftDateString, sanitizeSeed, randomSeed, parseLaunchParams,
+    Store, sanitizeProfile, sanitizeSettings, sanitizeDaily, defaultProfile, defaultDaily,
+    registerDailyAttempt, recordDailyResult, currentStreak,
+    UPGRADES, THEMES, upgradeCost, buyUpgrade, selectTheme, addScrap, scrapForRun, loadoutFrom,
+    GLYPH, buildTimeline, buildShareText, challengeUrl, loadoutTag,
+    generateSegment, GameEngine, runAdBreak, withTimeout, AD_PLACEMENTS,
+  };
+
+  if (typeof document !== 'undefined' && typeof window !== 'undefined') {
+    const boot = () => {
+      const app = new App();
+      if (app.launch.debug) {
+        // ?debug=1 exposes hooks for e2e tests; the game is client-only, so this grants nothing new.
+        api.debug = {
+          state: () => app.state,
+          forceBreach: () => { if (app.engine && app.state === 'playing') app.engine.hit({ kind: 'debug' }); },
+          run: () => app.run && app.run.results,
+          shareText: () => (app.run && app.run.results ? app.shareText() : null),
+        };
+      }
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
+    else boot();
+  }
+  globalThis.PulseBreach = api;
+})();
+</script>
+</body>
+</html>

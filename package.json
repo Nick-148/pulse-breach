@@ -1,0 +1,21 @@
+{
+  "name": "pulse-breach",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pulse Breach: Daily Run — single-file, zero-dependency HTML5 Canvas arcade game.",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "node --test \"tests/unit/*.test.mjs\"",
+    "serve": "node scripts/serve.mjs dist 4173",
+    "dev": "node scripts/build.mjs && node scripts/serve.mjs dist 4173",
+    "verify": "npm run check && npm test && npm run build",
+    "test:e2e": "npm run build && playwright test",
+    "deploy": "npm run verify && npx wrangler@3 pages deploy dist --project-name pulse-breach"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.49.1"
+  }
+}
