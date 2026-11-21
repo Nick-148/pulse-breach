@@ -125,3 +125,23 @@ test('touch devices get the on-screen dash button during a run', async ({ page }
   await expect(page.locator('#dash-btn')).toBeVisible();
   await page.locator('#dash-btn').dispatchEvent('pointerdown');
 });
+
+test('daily attempt # and streak update after a run ended from pause', async ({ page }) => {
+  await page.goto('/');
+  const stat = (label) => page.locator('#title-stats div').filter({ hasText: label }).locator('dd');
+  await expect(stat('Attempt #')).toHaveText('1');
+  await expect(stat('Streak')).toHaveText('0d');
+  await page.getByRole('button', { name: 'START RUN' }).click();
+  await page.waitForTimeout(400);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#scr-pause')).toBeVisible();
+  await page.getByRole('button', { name: 'End run' }).click();
+  await expect(page.locator('#scr-over')).toBeVisible();
+  await page.getByRole('button', { name: 'Menu' }).click();
+  await expect(stat('Attempt #')).toHaveText('2');
+  await expect(stat('Streak')).toHaveText('1d');
+  const daily = await page.evaluate(() => JSON.parse(localStorage.getItem('pulse_breach_v1_daily')));
+  expect(daily.attempts).toBe(1);
+  expect(daily.streak).toBe(1);
+  expect(daily.best).toBeGreaterThanOrEqual(0);
+});
