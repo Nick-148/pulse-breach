@@ -6,3 +6,4 @@ playwright-report/
 .dev.vars
 .env*
 .DS_Store
+.data/
