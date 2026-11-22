@@ -52,7 +52,7 @@ export const GAMES = deepFreeze([
     slug: 'neon-drift',
     title: 'Neon Drift',
     subtitle: 'Salvage Run',
-    categories: ['timing', 'upgrades'],
+    categories: ['timing'],
     accent: '#7dff6b',
     accent2: '#ffb347',
     blurb: 'Tether, swing and slingshot through a seeded salvage field before your fuel runs dry.',
@@ -77,8 +77,9 @@ export const GAMES = deepFreeze([
     world: { w: 1280, h: 720 },
     scoring: {
       maxSurvivalMs: 30 * 60_000,
+      // Bot runs score 50–270 pts/s; the ceiling is ~7x the best observed (ADR 0010).
       maxScore: (seconds) => 4000 + 2000 * seconds,
-      pointsPerCredit: 250,
+      pointsPerCredit: 80,
       maxRunCredits: 60,
     },
   },

@@ -9,6 +9,9 @@ import { randomHex, signToken, verifyToken } from './crypto.mjs';
 import { all, balances, bookedAmount, cappedGrant, first, stmt, exec } from './db.mjs';
 
 const BOARD_SIZE = 50;
+const BOARD_SELECT = `SELECT b.score, b.survival_ms, b.run_id, b.player_id, p.username, (r.ghost IS NOT NULL) AS has_ghost
+  FROM bests b JOIN players p ON p.id = b.player_id LEFT JOIN runs r ON r.id = b.run_id
+  WHERE b.game = ? AND b.board = ?`;
 
 function requireSecret(env) {
   if (!env.RUN_SECRET || env.RUN_SECRET.length < 32) throw new HttpError(503, 'leaderboards-offline');
@@ -141,13 +144,10 @@ export async function leaderboard(ctx, { game: slug }) {
   const player = await ctx.player();
   if (kind === 'friends' && !player) throw new HttpError(401, 'sign-in-required');
 
-  const select = `SELECT b.score, b.survival_ms, b.run_id, b.player_id, p.username, (r.ghost IS NOT NULL) AS has_ghost
-    FROM bests b JOIN players p ON p.id = b.player_id LEFT JOIN runs r ON r.id = b.run_id
-    WHERE b.game = ? AND b.board = ?`;
   const rows = kind === 'friends'
-    ? await all(ctx.db, `${select} AND (b.player_id = ? OR b.player_id IN (SELECT friend_id FROM friends WHERE player_id = ?))
+    ? await all(ctx.db, `${BOARD_SELECT} AND (b.player_id = ? OR b.player_id IN (SELECT friend_id FROM friends WHERE player_id = ?))
         ORDER BY b.score DESC, b.updated_at ASC LIMIT ?`, game.slug, board, player.id, player.id, BOARD_SIZE)
-    : await all(ctx.db, `${select} ORDER BY b.score DESC, b.updated_at ASC LIMIT ?`, game.slug, board, BOARD_SIZE);
+    : await all(ctx.db, `${BOARD_SELECT} ORDER BY b.score DESC, b.updated_at ASC LIMIT ?`, game.slug, board, BOARD_SIZE);
 
   let me = null;
   if (player) {

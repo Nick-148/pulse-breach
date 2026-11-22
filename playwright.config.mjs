@@ -9,7 +9,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: { baseURL: 'http://127.0.0.1:4174', trace: 'retain-on-failure' },
-  webServer: { command: 'node scripts/serve.mjs dist 4174', url: 'http://127.0.0.1:4174', reuseExistingServer: false },
+  webServer: { command: 'node --no-warnings=ExperimentalWarning scripts/serve.mjs dist 4174 --db=:memory:', url: 'http://127.0.0.1:4174/api/health', reuseExistingServer: false },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
     { name: 'mobile', use: { ...devices['Pixel 7'] } },

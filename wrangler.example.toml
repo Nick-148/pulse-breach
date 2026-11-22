@@ -1,0 +1,16 @@
+# Copy to wrangler.toml after `npx wrangler@3 d1 create arcade` and paste the database_id (runbook step 1).
+# wrangler.toml is what `wrangler d1 migrations apply` and `wrangler pages deploy` read.
+name = "seedfall-arcade"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-11-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "arcade"
+database_id = "PASTE-DATABASE-ID-HERE"
+migrations_dir = "migrations"
+
+# Secrets are NOT set here. Use:
+#   npx wrangler@3 pages secret put RUN_SECRET --project-name seedfall-arcade
+#   npx wrangler@3 pages secret put STRIPE_SECRET_KEY --project-name seedfall-arcade
+#   npx wrangler@3 pages secret put STRIPE_WEBHOOK_SECRET --project-name seedfall-arcade
