@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 export const ROOT = fileURLToPath(new URL('..', import.meta.url));
-export const SRC_HTML = new URL('../src/index.html', import.meta.url);
+export const SRC_HTML = new URL('../games/pulse-breach/index.html', import.meta.url);
 
 export function readSource() {
   return readFileSync(SRC_HTML, 'utf8');

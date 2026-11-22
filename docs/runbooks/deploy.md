@@ -29,7 +29,7 @@ npx wrangler@3 pages deploy dist --project-name pulse-breach
 
 1. Buy the domain (Cloudflare Registrar keeps DNS in one place).
 2. Pages project → **Custom domains → Set up a domain**.
-3. Update `CONFIG.canonicalUrl` in `src/index.html` (used only when the page is opened from `file://`).
+3. Update `CONFIG.canonicalUrl` in `games/pulse-breach/index.html` (used only when the page is opened from `file://`).
 4. **Zone settings that must stay OFF** (they rewrite HTML and break the hash CSP): Email Address
    Obfuscation, Rocket Loader, Automatic HTTPS Rewrites is fine, Web Analytics *automatic setup* off
    (if analytics are wanted, see PLAN and write an ADR first).

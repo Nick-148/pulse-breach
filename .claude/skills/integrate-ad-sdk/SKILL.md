@@ -9,7 +9,7 @@ Precondition: the account/approval exists (otherwise this is Blocker B3; see han
 
 1. **Pick the build target.** Own domain → Google H5 Games Ads. Portal upload → that portal's SDK only
    (portals forbid other ad networks).
-2. **Load the SDK** in a dedicated build variant (extend `scripts/build.mjs` with a flag), not in `src/index.html`,
+2. **Load the SDK** in a dedicated build variant (extend `scripts/build.mjs` with a flag), not in `games/pulse-breach/index.html`,
    so the default build stays zero-dependency.
 3. **CSP**: add exactly the origins the SDK documents to `buildCsp` for that variant (`script-src`, `connect-src`,
    `frame-src`, `img-src`). If the portal iframes the game, set `frame-ancestors` to the portal origin.

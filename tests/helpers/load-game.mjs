@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 export function loadGame() {
-  const html = readFileSync(new URL('../../src/index.html', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../../games/pulse-breach/index.html', import.meta.url), 'utf8');
   const match = html.match(/<script id="game-script">([\s\S]*?)<\/script>/);
   if (!match) throw new Error('game script not found');
   const context = vm.createContext({ console, URL, URLSearchParams, setTimeout, clearTimeout });
