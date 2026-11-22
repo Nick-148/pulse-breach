@@ -144,3 +144,10 @@ test('withTimeout resolves a hung SDK call as not granted', async () => {
   const e = await PB.withTimeout(Promise.reject(new Error('boom')), 1000);
   assert.equal(e.granted, false);
 });
+
+test('profiles carry a savedAt stamp for cloud-save conflict resolution (sanitized)', () => {
+  assert.equal(PB.defaultProfile().savedAt, 0);
+  assert.equal(PB.sanitizeProfile({ savedAt: 1795300000000 }).savedAt, 1795300000000);
+  assert.equal(PB.sanitizeProfile({ savedAt: 'soon' }).savedAt, 0);
+  assert.equal(PB.sanitizeProfile({ savedAt: -5 }).savedAt, 0);
+});
