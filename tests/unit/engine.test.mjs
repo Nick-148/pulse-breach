@@ -155,3 +155,25 @@ test('magnet upgrade pulls shards in from range', () => {
   for (let i = 0; i < 60; i++) e.updateShards(PB.STEP);
   assert.equal(e.stats.shards, 1);
 });
+
+test('ghost trace samples the ship at 10 Hz, identically at any frame rate, within server bounds', () => {
+  const trace = (dt) => {
+    const e = new PB.GameEngine({ seed: SEED, loadout: base });
+    for (let i = 0; i < Math.round(12 / dt); i++) e.update(dt, { moveX: 0.6, moveY: -0.35 });
+    return e;
+  };
+  const a = trace(1 / 60);
+  assert.equal(a.trace.length / 2, Math.floor(a.tick / Math.round(1 / (PB.STEP * PB.GHOST_HZ))));
+  assert.ok(a.trace.every((n) => Number.isInteger(n)));
+  assert.deepEqual(trace(1 / 144).trace, a.trace, 'frame-rate independent');
+  // Same bound the API enforces (shared/validate.mjs): points <= ceil(seconds * 10) + 2.
+  assert.ok(a.trace.length / 2 <= Math.ceil(a.time * 10) + 2);
+});
+
+test('platform trail colors are validated before reaching canvas/CSS', () => {
+  const good = { colors: { primary: '#7dffb2', secondary: '#29f3ff', trail: '#b6ffd9' } };
+  assert.deepEqual(JSON.parse(JSON.stringify(PB.validTrail(good))), good.colors);
+  assert.equal(PB.validTrail({ colors: { primary: 'red;background:url(x)', secondary: '#000000', trail: '#000000' } }), null);
+  assert.equal(PB.validTrail(null), null);
+  assert.equal(PB.validTrail({ colors: 'x' }), null);
+});

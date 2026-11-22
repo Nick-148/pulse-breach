@@ -1,8 +1,8 @@
 {
-  "name": "pulse-breach",
+  "name": "seedfall-arcade",
   "version": "1.0.0",
   "private": true,
-  "description": "Pulse Breach: Daily Run \u2014 single-file, zero-dependency HTML5 Canvas arcade game.",
+  "description": "Seedfall Arcade: a zero-dependency web arcade of single-file HTML5 Canvas games (Pulse Breach, Neon Drift) with daily seeds, leaderboards and an ArcadeSDK bridge. Cloudflare Pages + D1.",
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -11,12 +11,14 @@
     "lint": "eslint .",
     "check": "node scripts/check.mjs",
     "build": "node scripts/build.mjs",
-    "test": "node --test \"tests/unit/*.test.mjs\"",
-    "serve": "node scripts/serve.mjs dist 4173",
-    "dev": "node scripts/build.mjs && node scripts/serve.mjs dist 4173",
+    "test": "node --test --no-warnings=ExperimentalWarning \"tests/unit/*.test.mjs\"",
+    "serve": "node --no-warnings=ExperimentalWarning scripts/serve.mjs dist 4173",
+    "dev": "node scripts/build.mjs && node --no-warnings=ExperimentalWarning scripts/serve.mjs dist 4173",
     "verify": "npm run lint && npm run check && npm test && npm run build",
     "test:e2e": "npm run build && playwright test",
-    "deploy": "npm run verify && npx wrangler@3 pages deploy dist --project-name pulse-breach"
+    "db:migrate:local": "npx wrangler@3 d1 migrations apply arcade --local",
+    "db:migrate:remote": "npx wrangler@3 d1 migrations apply arcade --remote",
+    "deploy": "npm run verify && npx wrangler@3 pages deploy dist --project-name seedfall-arcade"
   },
   "devDependencies": {
     "@eslint/js": "9.17.0",

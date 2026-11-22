@@ -1,6 +1,6 @@
 # ADR 0006: Cloudflare Pages with a hash-pinned CSP
 
-- Status: accepted
+- Status: accepted; amended by ADR 0007 (one site-wide CSP, hosted cartridges externalised, `connect-src 'self'` for the portal)
 - Date: 2026-11-21
 
 ## Context
@@ -10,12 +10,12 @@ required by the single-file constraint, which normally pushes people to `'unsafe
 
 ## Decision
 
-- `npm run build` copies `src/index.html` to `dist/` and generates `dist/_headers` with
+- `npm run build` copies `games/pulse-breach/index.html` to `dist/` and generates `dist/_headers` with
   `script-src 'sha256-…'` / `style-src 'sha256-…'` computed from the exact inline bodies, plus
   `default-src 'none'`, `connect-src 'none'`, `img-src 'self' data:`, `base-uri 'none'`, `form-action 'none'`,
   `frame-ancestors 'self'`, HSTS, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, COOP.
 - `scripts/serve.mjs` applies the same `_headers` locally; e2e runs against it and fails on any CSP violation.
-- The raw `src/index.html` still works when opened directly or uploaded elsewhere (it just lacks the headers).
+- The raw `games/pulse-breach/index.html` still works when opened directly or uploaded elsewhere (it just lacks the headers).
 
 ## Consequences
 

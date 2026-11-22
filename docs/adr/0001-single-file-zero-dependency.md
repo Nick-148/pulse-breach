@@ -10,7 +10,7 @@ deployable to Cloudflare Pages as-is. The founder has ~10 hrs/week; fewer moving
 
 ## Decision
 
-- The game is `src/index.html`: exactly one `<style>` and one `<script id="game-script">` (strict-mode IIFE).
+- The game is `games/pulse-breach/index.html`: exactly one `<style>` and one `<script id="game-script">` (strict-mode IIFE).
 - Graphics: Canvas 2D primitives with additive-blend glows. Audio: Web Audio oscillators + a generated noise buffer.
 - Tooling (build, check, serve, tests) is Node built-ins only; the sole devDependency is `@playwright/test`.
 - `scripts/check.mjs` enforces: no remote `src/href`, no external stylesheets/imports, no network APIs, no HTML-string

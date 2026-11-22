@@ -12,7 +12,7 @@ const todaySeed = () => `DAILY-${new Date().toISOString().slice(0, 10)}`;
 
 test('loads under strict CSP with the daily seed and no errors', async ({ page }) => {
   const problems = guardConsole(page);
-  const res = await page.goto('/');
+  const res = await page.goto('/games/pulse-breach/play/');
   expect(res.headers()['content-security-policy']).toContain("default-src 'none'");
   await expect(page.locator('#title-kicker')).toContainText(todaySeed());
   await expect(page.locator('#banner-ad-slot')).toBeVisible();
@@ -22,7 +22,7 @@ test('loads under strict CSP with the daily seed and no errors', async ({ page }
 });
 
 test('page never scrolls and the game fits the viewport', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/games/pulse-breach/play/');
   const overflow = await page.evaluate(() => ({
     h: document.documentElement.scrollHeight - innerHeight,
     w: document.documentElement.scrollWidth - innerWidth,
@@ -35,7 +35,7 @@ test('full daily run: play → breach → decline revive → share copies a chal
   test.skip(info.project.name === 'mobile', 'clipboard permissions are desktop-only in this setup');
   const problems = guardConsole(page);
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-  await page.goto('/?debug=1');
+  await page.goto('/games/pulse-breach/play/?debug=1');
   await page.getByRole('button', { name: 'START RUN' }).click();
   await expect(page.locator('#hud')).toBeVisible();
   await page.keyboard.down('ArrowUp');
@@ -57,7 +57,7 @@ test('full daily run: play → breach → decline revive → share copies a chal
 });
 
 test('second-chance revive via simulated ad resumes the run with invulnerability', async ({ page }) => {
-  await page.goto('/?debug=1');
+  await page.goto('/games/pulse-breach/play/?debug=1');
   await page.getByRole('button', { name: 'START RUN' }).click();
   await page.waitForTimeout(500);
   await page.evaluate(() => window.PulseBreach.debug.forceBreach());
@@ -69,7 +69,7 @@ test('second-chance revive via simulated ad resumes the run with invulnerability
 });
 
 test('friend challenge link shows the banner and uses that seed', async ({ page }) => {
-  await page.goto('/?seed=abc123&beat=4200');
+  await page.goto('/games/pulse-breach/play/?seed=abc123&beat=4200');
   await expect(page.locator('#challenge-banner')).toContainText("CHALLENGE MODE: Beat your friend's run!");
   await expect(page.locator('#challenge-banner')).toContainText('4,200');
   await expect(page.locator('#title-kicker')).toContainText('ABC123');
@@ -77,7 +77,7 @@ test('friend challenge link shows the banner and uses that seed', async ({ page 
 
 test('malicious seed is rejected and never rendered', async ({ page }) => {
   const problems = guardConsole(page);
-  await page.goto('/?seed=%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E');
+  await page.goto('/games/pulse-breach/play/?seed=%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E');
   await expect(page.locator('#challenge-banner')).toBeHidden();
   await expect(page.locator('#title-kicker')).toContainText(todaySeed());
   expect(await page.locator('img').count()).toBe(0);
@@ -85,7 +85,7 @@ test('malicious seed is rejected and never rendered', async ({ page }) => {
 });
 
 test('hangar: rewarded top-up grants scrap, which buys an upgrade that persists', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/games/pulse-breach/play/');
   await page.getByRole('button', { name: /Hangar/ }).click();
   await expect(page.locator('#hangar-scrap')).toHaveText('0');
   await page.getByRole('button', { name: /\+100 scrap/ }).click();
@@ -99,7 +99,7 @@ test('hangar: rewarded top-up grants scrap, which buys an upgrade that persists'
 });
 
 test('ad mode toggle switches to SDK hooks (stub) and persists', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/games/pulse-breach/play/');
   await page.locator('#btn-ad-mode').click();
   await expect(page.locator('#btn-ad-mode')).toHaveText('Ad Mode: SDK Hooks (stub)');
   await page.reload();
@@ -111,7 +111,7 @@ test('ad mode toggle switches to SDK hooks (stub) and persists', async ({ page }
 });
 
 test('mute toggle persists', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/games/pulse-breach/play/');
   await page.locator('#btn-mute').click();
   await expect(page.locator('#btn-mute')).toHaveAttribute('aria-pressed', 'true');
   await page.reload();
@@ -120,14 +120,14 @@ test('mute toggle persists', async ({ page }) => {
 
 test('touch devices get the on-screen dash button during a run', async ({ page }, info) => {
   test.skip(info.project.name !== 'mobile', 'touch only');
-  await page.goto('/');
+  await page.goto('/games/pulse-breach/play/');
   await page.getByRole('button', { name: 'START RUN' }).click();
   await expect(page.locator('#dash-btn')).toBeVisible();
   await page.locator('#dash-btn').dispatchEvent('pointerdown');
 });
 
 test('daily attempt # and streak update after a run ended from pause', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/games/pulse-breach/play/');
   const stat = (label) => page.locator('#title-stats div').filter({ hasText: label }).locator('dd');
   await expect(stat('Attempt #')).toHaveText('1');
   await expect(stat('Streak')).toHaveText('0d');
