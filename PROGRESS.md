@@ -2,6 +2,41 @@
 
 Newest first. One dated entry per working session.
 
+## 2026-11-21 (evening session, from 20:15 ET): arcade platform
+
+Brief: turn Pulse Breach into a zero-upfront-cost web arcade (portal + ArcadeSDK + accounts + leaderboards +
+wallet + store) and add a second game, Neon Drift. Work happened on `feat/arcade-platform`.
+
+- Restructured the repo: `games/<slug>/index.html` cartridges, `shared/` pure modules, `portal/`, `server/`,
+  `functions/`, `migrations/`. Decisions in ADRs 0007–0011.
+- **Backend** (Pages Functions + D1): auth (username + server-generated Arcade Key, OAuth/magic-link stubs),
+  signed run tokens, plausibility checks (survival ≤ wall clock, per-game score ceilings, ghost bounds),
+  daily/all-time/friends boards (all-time counts daily seeds only), ghosts, ledger wallet (balances are
+  `SUM(delta)`, caps enforced inside single `INSERT … SELECT` statements), quests, streaks, guest merge,
+  cloud saves, friends, Stripe Checkout + signed webhooks. Tested end to end on node:sqlite through the real
+  router (`scripts/sqlite-d1.mjs`), so no Wrangler is needed locally.
+- Found and fixed while testing: featured-game credits were eating into the normal daily cap; split into two
+  buckets (`run`, `run_featured`). Stripe fulfilment now keys orders by our own id created *before* calling
+  Stripe, and records webhook events only after a successful fulfilment (retries stay safe).
+- **ArcadeSDK** + theater host: postMessage RPC with origin/source checks both ways; every call resolves with
+  a fallback; the SDK only exists when framed by the same-origin theater.
+- **Portal**: home, theater, store, profile dialog, legal drafts, 404, OG images (zero-dependency PNG
+  renderer), sitemap, JSON-LD. One site-wide CSP without hashes: the build externalises each hosted
+  cartridge's inline script/style; standalone copies go to `build/standalone/` untouched.
+- **Pulse Breach 1.1.0**: hosted mode, run tokens, score submission, 10 Hz ghost trace + ghost rendering,
+  arcade ads (VIP instant), equipped trails (validated hex colors), cloud save with `savedAt` last-write-wins.
+  Generation unchanged, so seeds are unchanged.
+- **Neon Drift: Salvage Run 1.0.0** (new, 85 KiB): one-button tether/slingshot. Balance tuned with a
+  heuristic bot: holding near a wall used to chain bounces (−12 fuel each, death in ~1 s), so I added a
+  0.35 s post-bounce stun, cut the bounce cost to 8, fuel drain 5→4.2/s, crate fuel 13→16, and mines now arm
+  only once the skiff is clear of them. Bot baseline: mean 30.8 s, min 11.5 s over 8 seeds (balance test
+  thresholds: every seed ≥ 8 s, mean ≥ 22 s). Quest targets set from this (35 s / 60 s / 3,000 pts).
+- Verified in the browser preview under the production CSP: home, store, theater for both games, guest run
+  → pending claim → account creation → run on the daily board, ghost challenge link → "racing <name>'s ghost".
+- Tests: 87 unit tests green; ESLint + static guards green. Playwright still hangs at startup locally
+  (Android emulator running), so e2e (rewritten: 3 specs, portal + both games) runs in GitHub Actions.
+- Not done (blocked): deploy, D1, secrets, Stripe, OAuth, domain, brand, legal review (PLAN.md B1–B11).
+
 ## 2026-11-21 (overnight session, 02:50–04:00 ET)
 
 - Asked the founder 4 kickoff questions (location, remote, fairness, deploy), recorded in `docs/SPEC.md → Clarifications`.

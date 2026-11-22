@@ -88,3 +88,49 @@ gathered at kickoff. If code and spec disagree, fix one of them and record why i
   palettes 150/250/400/650.
 - **Combo:** multiplier `1 + floor(chain / 4)`, max x10, 3 s window; 🔥 block at x6+.
 - **Aegis tiers:** 1 charge / 1 charge + shockwave / 2 charges + shockwave.
+
+---
+
+# Brief 2 (2026-11-21 evening): Web Arcade Platform
+
+Source: the founder pasted a brief for a production-grade, zero-upfront-cost web arcade (Roblox/Coolmath
+hybrid) hosting single-file games, starting with Pulse Breach and **Neon Drift: Salvage Run**. Summary of
+the requirements:
+
+1. **Guardrails**: free tiers only (Cloudflare Pages/Functions + D1/KV or Supabase; Stripe for optional
+   purchases); guest-first play in under 2 s with automatic merge into an account (Google / magic link /
+   username); asynchronous multiplayer only (daily global seeds, global + friends leaderboards,
+   `?seed=&beat=` links, ghost replays); per-game SEO routes with OG tags and below-the-fold copy.
+2. **Architecture**: portal shell (home with featured Daily Challenge, categories *Reflex & Dodge, Timing &
+   Rhythm, Logic & Puzzle, Arcade & Upgrades*, trending ticker, instant-play cards; theater `/games/[slug]`
+   with leaderboard sidebar/drawer, challenge generator, 728×90 / 320×50 ad slots outside the playfield;
+   profile & wallet (Arcade Credits, Gems/VIP, cosmetics, streak, bests); store `/store` behind a
+   `PaymentProvider`). Bridge `window.ArcadeSDK`: `init`, `submitScore` (with anti-cheat: plausibility,
+   duration, HMAC/session nonce), `wallet.getBalance/grant/spend`, `ads.showRewarded`, `share.challenge`.
+3. **Growth**: one featured daily game with a 2x credit multiplier and top-50 daily board; challenge-a-friend
+   links with a "TARGET TO BEAT" banner; cross-game daily/weekly quests.
+4. **Discipline**: work only inside this directory; AGENTS.md with a strict Game Cartridge Spec; PLAN /
+   PROGRESS / ADRs; server-side validation, rate limits, username sanitising, verified Stripe webhooks;
+   games playable offline/standalone; tests for the SDK, score validation, guest merge, seed determinism;
+   self-review before every commit.
+
+## Decisions made autonomously (no questions asked; recorded for review)
+
+| Topic | Decision | Where |
+| ----- | -------- | ----- |
+| Where it lives | This repo becomes the platform monorepo ("work strictly inside the current project directory") | ADR 0007 |
+| Backend | Cloudflare Pages Functions + D1 (one vendor) over Supabase | ADR 0008 |
+| Brand | "Seedfall Arcade", provisional, one constant | `shared/site.mjs`, PLAN B10 |
+| Username sign-in | Server-generated Arcade Key instead of user passwords (no reuse, no slow hashing on the free CPU budget) | ADR 0009 |
+| Google / magic link | Provider stubs until an OAuth client / email provider exist; no emails stored | ADR 0009, PLAN B7/B8 |
+| Guests on leaderboards | Guests can't appear; their runs are kept as signed pending claims for 24 h and submitted on sign-up | ADR 0010 |
+| All-time board | Built from daily-seed runs only (no farming easy custom seeds) | ADR 0010 |
+| Wallet | Append-only ledger; client grants only for capped reasons; featured-game credits in their own bucket | ADR 0010 |
+| Friends | One-way follow by friend code; friends board = people you follow + you | `server/account.mjs` |
+| Ghosts | 10 Hz positions; kept only for a player's best run per seed; `&ghost=` in challenge links | `shared/validate.mjs` |
+| Quests | Daily only (weekly in PLAN); deterministic from the UTC date | `shared/quests.mjs` |
+| Store | Stripe Checkout via REST + signed webhooks; "coming soon" until keys exist; simulated in dev only | ADR 0011 |
+| Ads | Portal-owned `HostAds` (simulated / SDK adapters / VIP instant); player-visible ad toggle removed when hosted | `portal/assets/js/ads.mjs` |
+| CSP | One site-wide policy, no hashes: hosted cartridges are externalised at build | ADR 0007 |
+| Neon Drift design | Original one-button tether/slingshot salvage game; fuel economy; mines; beacons relocate every 10 s | `games/neon-drift/` |
+| Daily seed format | Kept `DAILY-YYYY-MM-DD` per game (the brief's `?seed=2026-11-21` example also works as a custom seed) | AGENTS.md |

@@ -1,6 +1,6 @@
 # ADR 0006: Cloudflare Pages with a hash-pinned CSP
 
-- Status: accepted
+- Status: accepted; amended by ADR 0007 (one site-wide CSP, hosted cartridges externalised, `connect-src 'self'` for the portal)
 - Date: 2026-11-21
 
 ## Context

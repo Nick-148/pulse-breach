@@ -1,52 +1,63 @@
-# PLAN: Pulse Breach: Daily Run
+# PLAN: Seedfall Arcade (Pulse Breach, Neon Drift, …)
 
 Status legend: ✅ done · 🟡 in progress · ⬜ not started · ⛔ blocked
 
-## Milestone 1: Playable, shippable single file (2026-11-21) ✅
+## Milestone 1: Pulse Breach, playable single file (2026-11-21) ✅
 
-- ✅ Single-file game `src/index.html`, zero runtime dependencies
-- ✅ Fixed 120 Hz timestep, dt clamp 0.05 s, 60/120/144 Hz determinism tests
-- ✅ Six 10-second waves + Overdrive (debris, sweeping lasers w/ 1.2 s telegraph, hunter drones w/ baiting,
-  pulse rings, gravity wells, golden cores, crossfire, meteor swarms, core meltdown shrapnel)
-- ✅ Juice: hitstop (30 ms graze / dash-through), particles, popups `+100 x4`, shake, flash, graze bonus
-- ✅ Seeds: Daily (UTC), Friend Challenge `?seed=` (+ optional `&beat=`), Practice (random)
-- ✅ Daily best / streak / attempt # in `localStorage` (`pulse_breach_v1_*`)
-- ✅ Share card: 6-block emoji timeline, stats, seed, challenge URL, clipboard + `navigator.share`, "Copied!" toast
-- ✅ Hangar: 3 upgrades × 3 tiers (magnet, dash cooldown, Aegis), 4 unlockable hull palettes
-- ✅ AdManager: banner slot outside canvas, 3 rewarded placements, Simulated / SDK Hooks toggle,
-  Poki / CrazyGames / H5 `adBreak` adapters + stub
-- ✅ Portrait mobile: view rotates 90° instead of shrinking; touch drag + double-tap + DASH button
-- ✅ Cloudflare Pages build: `dist/` + `_headers` (hash-pinned CSP, HSTS, nosniff, Permissions-Policy)
-- ✅ Unit tests (node:test, 36, incl. a seed-balance bot)
-- ✅ E2E (Playwright, desktop + Pixel 7) green in GitHub Actions: 20 passed, 2 intentional skips.
-  Locally the Playwright runner hangs at startup on the founder's Mac (see PROGRESS); CI is the source of truth
-- ✅ AGENTS.md, skills, ADRs, runbook
+- ✅ Single-file game, fixed 120 Hz step, six waves + Overdrive, juice, daily/challenge/practice seeds
+- ✅ Share card, hangar (3 upgrades × 3 tiers, palettes), AdManager (simulated + SDK adapters)
+- ✅ Portrait rotation, unit + e2e tests, CI, ADRs 0001–0006
 
-## Milestone 2: Launch (next)
+## Milestone 2: Arcade platform (2026-11-21, `feat/arcade-platform`) ✅ code complete, ⛔ not deployed
 
-- ⛔ Deploy to Cloudflare Pages (see Blockers B1)
-- ⛔ Custom domain `pulsebreach.io` (or alternative), see B2; then update `CONFIG.canonicalUrl`
-- ✅ CI: GitHub Actions (`.github/workflows/ci.yml`) runs `npm run verify` + `npm run test:e2e` on push/PR (Node 22)
-- ✅ GitHub Actions pinned to commit SHAs; Dependabot (npm + actions, weekly)
-- ⬜ Investigate local Playwright hang on macOS (try newer `@playwright/test`, or stop the Android emulator)
-- ✅ ESLint (flat config + `eslint-plugin-html`) for the inline script, part of `npm run verify`
-- ⬜ Hide the Ad Mode toggle in production builds (e.g. `?debug=1` only) once real ads are live
-- ⬜ Open Graph share image (procedurally rendered PNG at build time) for richer link previews
-- ⬜ Balance pass with real players (death-time histogram per wave; tune `generateSegment` at UTC midnight)
+- ✅ Repo restructured: `games/<slug>/index.html` cartridges + `shared/` + `portal/` + `server/` (ADR 0007)
+- ✅ ArcadeSDK bridge (`sdk/arcade-sdk.js`) + theater host; standalone games untouched (6 bridge tests)
+- ✅ Portal: home (featured daily game with 2x credits, quests, trending ticker, category filters), theater
+  per game (iframe, leaderboard tabs, challenge-a-friend card, 728×90 / 320×50 slots outside the frame,
+  SEO copy + JSON-LD), store, profile & wallet dialog, privacy/terms drafts, 404, sitemap, OG images
+- ✅ One site-wide CSP with no hashes (`script-src 'self'`): hosted cartridges are externalised at build
+- ✅ API on Pages Functions + D1 (ADR 0008): guest-first accounts with username + Arcade Key (ADR 0009),
+  signed run tokens + plausibility checks + rate limits (ADR 0010), daily / all-time / friends boards,
+  ghosts, ledger wallet with SQL-enforced caps, daily quests, login streaks, guest merge, cloud saves,
+  friends by code, Stripe Checkout + verified webhooks behind `paymentProvider()` (ADR 0011)
+- ✅ Pulse Breach on the SDK: hosted mode, run tokens, score submit, ghost recording + rendering, VIP/arcade
+  ads, equipped trails, cloud save
+- ✅ Neon Drift: Salvage Run (new one-button tether/slingshot game) with the full cartridge contract
+- ✅ Tests: 87 unit (API end to end on SQLite, shared rules, SDK, both engines + balance bots);
+  e2e rewritten for portal + both games (runs in CI)
+- ⛔ Deploy (B1), D1 + `RUN_SECRET` (B9)
 
-## Milestone 3: Monetization & growth
+## Milestone 3: Launch
 
-- ⛔ Real ad network (B3), consent management for EU/UK traffic (B4)
-- ⬜ Portal builds (Poki / CrazyGames): build variant that loads the SDK + adjusts CSP/frame-ancestors (ADR 0003)
-- ⬜ Optional global daily leaderboard (needs a backend → new ADR; Cloudflare Worker + D1 is the natural fit)
-- ⬜ Accessibility: colour-blind safe hazard palette option, remappable keys
+- ⛔ Cloudflare project, D1, secrets, first deploy (B1, B9): `docs/runbooks/deploy.md`
+- ⛔ Domain + `SITE_URL` (B2), brand name (B10)
+- ⛔ Legal review of privacy/terms, COPPA/GDPR-K stance, refund policy (B11) before accounts/store go public
+- ⬜ Investigate local Playwright hang on macOS (newer `@playwright/test`, or stop the Android emulator)
+- ⬜ Admin tools: rename/remove abusive usernames from a page instead of SQL (runbook has the SQL for now)
+- ⬜ Balance pass with real players (death-time histograms per segment; re-tune at UTC midnight)
+
+## Milestone 4: Growth & monetization
+
+- ⛔ Real ad network (B3) + consent management for EU/UK (B4); wire into `portal/assets/js/ads.mjs`
+- ⛔ Stripe live mode (B6); Google sign-in (B7); email magic link (B8)
+- ⬜ Weekly quests and a weekly leaderboard (same tables, `board = 'W:YYYY-Www'`)
+- ⬜ Server-side replay verification: record inputs, re-simulate the deterministic engine in a Worker (ADR 0010)
+- ⬜ Portal builds for Poki / CrazyGames from `build/standalone/` (ADR 0003)
+- ⬜ More cartridges (Logic & Puzzle category is empty): use `.claude/skills/add-game`
+- ⬜ Rename the GitHub repo to match the brand once B10 is decided
 
 ## Blockers
 
 | ID | What | Why it blocks | Who unblocks | Since | Stub / workaround |
 | -- | ---- | ------------- | ------------ | ----- | ----------------- |
-| B1 | Cloudflare login for `wrangler pages deploy` (or connect the GitHub repo in the Pages dashboard) | Publishing needs the founder's Cloudflare account | Founder | 2026-11-21 | `dist/` + `_headers` ready; `docs/runbooks/deploy.md` has both paths |
-| B2 | Domain purchase (`pulsebreach.io` suggested; check availability) | Canonical share URLs + brand | Founder | 2026-11-21 | Share links use the current origin (`*.pages.dev` works) |
-| B3 | Ad network account/approval (AdSense H5 Games Ads, Poki, or CrazyGames) | Real revenue | Founder (apply) | 2026-11-21 | `AdManager` Simulated mode + SDK-hook stub with the real contract |
-| B4 | Consent management platform for personalised ads (EU/UK) | Legal requirement before serving personalised ads | Founder decision | 2026-11-21 | No ad SDK is loaded, so no consent needed yet |
-| B5 | Original "push to GitLab" ask replaced by GitHub `Nick-148/pulse-breach` | n/a | Founder (confirmed in chat) | 2026-11-21 | n/a |
+| B1 | Cloudflare login / Pages project | Publishing needs the founder's account | Founder | 2026-11-21 | `npm run deploy` + runbook ready; local `npm run dev` runs everything |
+| B2 | Domain (`.io` suggested) | Canonical/OG URLs, brand | Founder | 2026-11-21 | `SITE_URL` env var; defaults to `seedfall-arcade.pages.dev` |
+| B3 | Ad network account (AdSense H5 Games, Poki, CrazyGames) | Real ad revenue | Founder (apply) | 2026-11-21 | `HostAds` simulated mode + SDK adapters with the real contract |
+| B4 | Consent management (EU/UK) | Required before personalised ads | Founder decision | 2026-11-21 | No ad SDK loaded, so no consent needed yet |
+| B5 | Remote changed from GitLab to GitHub `Nick-148/pulse-breach` | n/a | Founder (confirmed) | 2026-11-21 | n/a |
+| B6 | Stripe account + keys + webhook | Real purchases | Founder | 2026-11-21 | `paymentProvider()` → `disabled` in prod ("coming soon"), `simulated` in dev |
+| B7 | Google OAuth client | Google sign-in | Founder | 2026-11-21 | `AUTH_PROVIDERS.google` reports disabled; username + Arcade Key works |
+| B8 | Email provider for magic links (stores emails = PII) | Email sign-in / key recovery | Founder decision | 2026-11-21 | Provider stub returns 501; no emails collected |
+| B9 | D1 database + `RUN_SECRET` secret | Accounts, leaderboards, wallet online | Founder (runbook §1) | 2026-11-21 | Without them the site runs guest-only and says so |
+| B10 | Platform brand name ("Seedfall Arcade" is provisional) | Store listing, domain, legal pages | Founder | 2026-11-21 | One constant: `shared/site.mjs` |
+| B11 | Legal review (privacy, terms, COPPA/GDPR-K, refunds) | Accounts and payments for an audience that includes kids | Founder + counsel | 2026-11-21 | Pages marked "Draft"; store disabled in prod until B6 |
